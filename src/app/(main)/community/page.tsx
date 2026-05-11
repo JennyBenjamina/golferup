@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   MessageSquare,
@@ -34,7 +34,7 @@ const sortOptions = [
 type CategoryValue = "" | "gear_talk" | "course_reviews" | "swing_tips" | "deals" | "general";
 type SortValue = "newest" | "trending" | "top";
 
-export default function CommunityPage() {
+function CommunityPageContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const initialCat = (searchParams.get("cat") ?? "") as CategoryValue;
@@ -309,5 +309,19 @@ export default function CommunityPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+          <p className="text-sm text-gray-500">Loading community...</p>
+        </div>
+      }
+    >
+      <CommunityPageContent />
+    </Suspense>
   );
 }
