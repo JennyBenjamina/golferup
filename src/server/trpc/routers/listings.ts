@@ -1,0 +1,272 @@
+import { z } from "zod";
+import { eq, desc, and, sql } from "drizzle-orm";
+import { router, publicProcedure, protectedProcedure } from "../init";
+import { listings, users } from "@/server/db/schema";
+import { indexListings, removeFromIndex } from "@/server/services/meilisearch";
+import type { MeiliListing } from "@/server/services/meilisearch";
+
+const createListingSchema = z.object({
+  title: z.string().min(3).max(255),
+  description: z.string().optional(),
+  price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
+  condition: z.enum(["new", "like_new", "excellent", "good", "fair", "poor"]),
+  category: z.enum([
+    "drivers", "woods", "hybrids", "irons", "wedges", "putters",
+    "complete_sets", "bags", "push_carts", "rangefinders", "gps_devices",
+    "apparel", "shoes", "gloves", "balls", "accessories", "training_aids", "other",
+  ]),
+  brand: z.string().max(100).optional(),
+  model: z.string().max(100).optional(),
+  flex: z.string().max(50).optional(),
+  loft: z.string().max(50).optional(),
+  hand: z.enum(["right", "left"]).optional(),
+  images: z.array(z.string().url()).default([]),
+  locationCity: z.string().max(255).optional(),
+  locationState: z.string().max(100).optional(),
+  locationLat: z.number().optional(),
+  locationLng: z.number().optional(),
+});
+
+export const listingsRouter = router({
+  // Get a paginated feed of active listings
+  feed: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(50).default(20),
+        cursor: z.string().uuid().optional(),
+        category: z.string().optional(),
+        sortBy: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { limit, cursor, category, sortBy } = input;
+
+      let orderBy;
+      switch (sortBy) {
+        case "price_asc":
+          orderBy = sql`${listings.price}::numeric ASC`;
+          break;
+        case "price_desc":
+          orderBy = sql`${listings.price}::numeric DESC`;
+          break;
+        default:
+          orderBy = desc(listings.createdAt);
+      }
+
+      const conditions = [eq(listings.status, "active")];
+      if (category) {
+        conditions.push(eq(listings.category, category as any));
+      }
+
+      const results = await ctx.db
+        .select({
+          listing: listings,
+          seller: {
+            id: users.id,
+            name: users.name,
+            image: users.image,
+            ratingAvg: users.ratingAvg,
+          },
+        })
+        .from(listings)
+        .innerJoin(users, eq(listings.sellerId, users.id))
+        .where(and(...conditions))
+        .orderBy(orderBy)
+        .limit(limit + 1);
+
+      let nextCursor: string | undefined;
+      if (results.length > limit) {
+        const next = results.pop();
+        nextCursor = next?.listing.id;
+      }
+
+      return {
+        listings: results,
+        nextCursor,
+      };
+    }),
+
+  // Get a single listing by ID
+  getById: publicProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .select({
+          listing: listings,
+          seller: {
+            id: users.id,
+            name: users.name,
+            image: users.image,
+            ratingAvg: users.ratingAvg,
+            ratingCount: users.ratingCount,
+            locationCity: users.locationCity,
+            locationState: users.locationState,
+            createdAt: users.createdAt,
+          },
+        })
+        .from(listings)
+        .innerJoin(users, eq(listings.sellerId, users.id))
+        .where(eq(listings.id, input.id))
+        .limit(1);
+
+      if (!result[0]) {
+        return null;
+      }
+
+      // Increment view count
+      await ctx.db
+        .update(listings)
+        .set({ viewCount: sql`${listings.viewCount} + 1` })
+        .where(eq(listings.id, input.id));
+
+      return result[0];
+    }),
+
+  // Create a new listing
+  create: protectedProcedure
+    .input(createListingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [listing] = await ctx.db
+        .insert(listings)
+        .values({
+          ...input,
+          sellerId: ctx.userId,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        })
+        .returning();
+
+      // Index into Meilisearch (fire-and-forget)
+      if (listing) {
+        const [seller] = await ctx.db
+          .select({ name: users.name, image: users.image, ratingAvg: users.ratingAvg })
+          .from(users)
+          .where(eq(users.id, ctx.userId))
+          .limit(1);
+
+        const doc: MeiliListing = {
+          id: listing.id,
+          title: listing.title,
+          description: listing.description,
+          price: parseFloat(listing.price),
+          condition: listing.condition,
+          category: listing.category,
+          brand: listing.brand,
+          model: listing.model,
+          hand: listing.hand,
+          flex: listing.flex,
+          loft: listing.loft,
+          images: listing.images ?? [],
+          locationCity: listing.locationCity,
+          locationState: listing.locationState,
+          ...(listing.locationLat && listing.locationLng
+            ? { _geo: { lat: listing.locationLat, lng: listing.locationLng } }
+            : {}),
+          status: listing.status,
+          createdAt: new Date(listing.createdAt).getTime(),
+          sellerId: listing.sellerId,
+          sellerName: seller?.name ?? null,
+          sellerImage: seller?.image ?? null,
+          sellerRatingAvg: seller?.ratingAvg ?? null,
+        };
+        indexListings([doc]).catch(() => {}); // don't block on search index
+      }
+
+      return listing;
+    }),
+
+  // Update a listing (only by the seller)
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        data: createListingSchema.partial(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [listing] = await ctx.db
+        .update(listings)
+        .set({
+          ...input.data,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(listings.id, input.id), eq(listings.sellerId, ctx.userId)))
+        .returning();
+
+      // Re-index updated listing
+      if (listing) {
+        const [seller] = await ctx.db
+          .select({ name: users.name, image: users.image, ratingAvg: users.ratingAvg })
+          .from(users)
+          .where(eq(users.id, ctx.userId))
+          .limit(1);
+
+        const doc: MeiliListing = {
+          id: listing.id,
+          title: listing.title,
+          description: listing.description,
+          price: parseFloat(listing.price),
+          condition: listing.condition,
+          category: listing.category,
+          brand: listing.brand,
+          model: listing.model,
+          hand: listing.hand,
+          flex: listing.flex,
+          loft: listing.loft,
+          images: listing.images ?? [],
+          locationCity: listing.locationCity,
+          locationState: listing.locationState,
+          ...(listing.locationLat && listing.locationLng
+            ? { _geo: { lat: listing.locationLat, lng: listing.locationLng } }
+            : {}),
+          status: listing.status,
+          createdAt: new Date(listing.createdAt).getTime(),
+          sellerId: listing.sellerId,
+          sellerName: seller?.name ?? null,
+          sellerImage: seller?.image ?? null,
+          sellerRatingAvg: seller?.ratingAvg ?? null,
+        };
+        indexListings([doc]).catch(() => {});
+      }
+
+      return listing;
+    }),
+
+  // Delete a listing (only by the seller)
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .delete(listings)
+        .where(and(eq(listings.id, input.id), eq(listings.sellerId, ctx.userId)));
+
+      // Remove from search index
+      removeFromIndex(input.id).catch(() => {});
+
+      return { success: true };
+    }),
+
+  // Get listings by a specific user
+  byUser: publicProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(listings)
+        .where(
+          and(
+            eq(listings.sellerId, input.userId),
+            eq(listings.status, "active")
+          )
+        )
+        .orderBy(desc(listings.createdAt));
+    }),
+
+  // Get current user's listings (all statuses)
+  myListings: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db
+      .select()
+      .from(listings)
+      .where(eq(listings.sellerId, ctx.userId))
+      .orderBy(desc(listings.createdAt));
+  }),
+});
