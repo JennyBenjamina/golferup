@@ -184,7 +184,7 @@ function SearchContent() {
       {/* Search metadata */}
       {data && data.hits.length > 0 && (
         <p className="text-center text-xs text-gray-400 mt-8">
-          {data.totalHits.toLocaleString()} results in {data.processingTimeMs}ms
+          {data.totalHits.toLocaleString()} results
         </p>
       )}
     </div>

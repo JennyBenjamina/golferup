@@ -2,8 +2,6 @@ import { z } from "zod";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { router, publicProcedure, protectedProcedure } from "../init";
 import { listings, users } from "@/server/db/schema";
-import { indexListings, removeFromIndex } from "@/server/services/meilisearch";
-import type { MeiliListing } from "@/server/services/meilisearch";
 
 const createListingSchema = z.object({
   title: z.string().min(3).max(255),
@@ -135,42 +133,6 @@ export const listingsRouter = router({
         })
         .returning();
 
-      // Index into Meilisearch (fire-and-forget)
-      if (listing) {
-        const [seller] = await ctx.db
-          .select({ name: users.name, image: users.image, ratingAvg: users.ratingAvg })
-          .from(users)
-          .where(eq(users.id, ctx.userId))
-          .limit(1);
-
-        const doc: MeiliListing = {
-          id: listing.id,
-          title: listing.title,
-          description: listing.description,
-          price: parseFloat(listing.price),
-          condition: listing.condition,
-          category: listing.category,
-          brand: listing.brand,
-          model: listing.model,
-          hand: listing.hand,
-          flex: listing.flex,
-          loft: listing.loft,
-          images: listing.images ?? [],
-          locationCity: listing.locationCity,
-          locationState: listing.locationState,
-          ...(listing.locationLat && listing.locationLng
-            ? { _geo: { lat: listing.locationLat, lng: listing.locationLng } }
-            : {}),
-          status: listing.status,
-          createdAt: new Date(listing.createdAt).getTime(),
-          sellerId: listing.sellerId,
-          sellerName: seller?.name ?? null,
-          sellerImage: seller?.image ?? null,
-          sellerRatingAvg: seller?.ratingAvg ?? null,
-        };
-        indexListings([doc]).catch(() => {}); // don't block on search index
-      }
-
       return listing;
     }),
 
@@ -192,42 +154,6 @@ export const listingsRouter = router({
         .where(and(eq(listings.id, input.id), eq(listings.sellerId, ctx.userId)))
         .returning();
 
-      // Re-index updated listing
-      if (listing) {
-        const [seller] = await ctx.db
-          .select({ name: users.name, image: users.image, ratingAvg: users.ratingAvg })
-          .from(users)
-          .where(eq(users.id, ctx.userId))
-          .limit(1);
-
-        const doc: MeiliListing = {
-          id: listing.id,
-          title: listing.title,
-          description: listing.description,
-          price: parseFloat(listing.price),
-          condition: listing.condition,
-          category: listing.category,
-          brand: listing.brand,
-          model: listing.model,
-          hand: listing.hand,
-          flex: listing.flex,
-          loft: listing.loft,
-          images: listing.images ?? [],
-          locationCity: listing.locationCity,
-          locationState: listing.locationState,
-          ...(listing.locationLat && listing.locationLng
-            ? { _geo: { lat: listing.locationLat, lng: listing.locationLng } }
-            : {}),
-          status: listing.status,
-          createdAt: new Date(listing.createdAt).getTime(),
-          sellerId: listing.sellerId,
-          sellerName: seller?.name ?? null,
-          sellerImage: seller?.image ?? null,
-          sellerRatingAvg: seller?.ratingAvg ?? null,
-        };
-        indexListings([doc]).catch(() => {});
-      }
-
       return listing;
     }),
 
@@ -238,9 +164,6 @@ export const listingsRouter = router({
       await ctx.db
         .delete(listings)
         .where(and(eq(listings.id, input.id), eq(listings.sellerId, ctx.userId)));
-
-      // Remove from search index
-      removeFromIndex(input.id).catch(() => {});
 
       return { success: true };
     }),

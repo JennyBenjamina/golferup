@@ -13,7 +13,7 @@ export interface SearchFilterValues {
   priceMax?: number;
   locationState?: string;
   radiusMiles?: number;
-  sortBy: "relevance" | "price_asc" | "price_desc" | "newest" | "nearest";
+  sortBy: "relevance" | "price_asc" | "price_desc" | "newest";
 }
 
 interface SearchFiltersProps {
@@ -71,7 +71,6 @@ const sortOptions = [
   { value: "newest", label: "Newest First" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
-  { value: "nearest", label: "Nearest First" },
 ];
 
 export function SearchFilters({
