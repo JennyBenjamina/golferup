@@ -1,10 +1,43 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../init";
 import { listings, users } from "@/server/db/schema";
-import { eq, and, gte, lte, ilike, or, desc, asc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, desc, asc, sql } from "drizzle-orm";
+
+/**
+ * Build a weighted tsvector from multiple columns.
+ * Weight A (highest) = title, brand
+ * Weight B = model, category
+ * Weight C = description
+ *
+ * This means a match on the title or brand ranks higher than one buried
+ * in the description.
+ */
+const searchVector = sql`(
+  setweight(to_tsvector('english', coalesce(${listings.title}, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(${listings.brand}, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(${listings.model}, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(${listings.category}::text, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(${listings.description}, '')), 'C')
+)`;
+
+/**
+ * Convert a user query string into a tsquery.
+ * - Splits on spaces, adds :* prefix matching so "taylor" matches "taylormade"
+ * - Joins with & (AND) so all terms must appear
+ */
+function buildTsQuery(query: string) {
+  const cleaned = query
+    .trim()
+    .replace(/[^\w\s]/g, "") // strip special chars
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word}:*`)
+    .join(" & ");
+
+  return cleaned || "";
+}
 
 export const searchRouter = router({
-  // Full-text search with filters using PostgreSQL
   search: publicProcedure
     .input(
       z.object({
@@ -25,20 +58,19 @@ export const searchRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const conditions = [eq(listings.status, "active")];
+      const hasQuery = input.query.trim().length > 0;
 
-      // Text search: match against title, description, brand, model
-      if (input.query.trim()) {
-        const searchTerm = `%${input.query.trim()}%`;
-        conditions.push(
-          or(
-            ilike(listings.title, searchTerm),
-            ilike(listings.description, searchTerm),
-            ilike(listings.brand, searchTerm),
-            ilike(listings.model, searchTerm)
-          )!
-        );
+      // Full-text search condition
+      if (hasQuery) {
+        const tsQueryString = buildTsQuery(input.query);
+        if (tsQueryString) {
+          conditions.push(
+            sql`${searchVector} @@ to_tsquery('english', ${tsQueryString})`
+          );
+        }
       }
 
+      // Filters
       if (input.category) {
         conditions.push(eq(listings.category, input.category as any));
       }
@@ -61,24 +93,31 @@ export const searchRouter = router({
         conditions.push(eq(listings.locationState, input.locationState));
       }
 
-      // Determine sort order
+      // Sort order
       let orderBy;
-      switch (input.sortBy) {
-        case "price_asc":
-          orderBy = asc(sql`${listings.price}::numeric`);
-          break;
-        case "price_desc":
-          orderBy = desc(sql`${listings.price}::numeric`);
-          break;
-        case "newest":
-          orderBy = desc(listings.createdAt);
-          break;
-        default:
-          // "relevance" — newest first as default
-          orderBy = desc(listings.createdAt);
+      if (input.sortBy === "relevance" && hasQuery) {
+        // Rank by full-text relevance (higher score = better match)
+        const tsQueryString = buildTsQuery(input.query);
+        orderBy = desc(
+          sql`ts_rank_cd(${searchVector}, to_tsquery('english', ${tsQueryString}))`
+        );
+      } else {
+        switch (input.sortBy) {
+          case "price_asc":
+            orderBy = asc(sql`${listings.price}::numeric`);
+            break;
+          case "price_desc":
+            orderBy = desc(sql`${listings.price}::numeric`);
+            break;
+          case "newest":
+            orderBy = desc(listings.createdAt);
+            break;
+          default:
+            orderBy = desc(listings.createdAt);
+        }
       }
 
-      // Get total count
+      // Count
       const [countResult] = await ctx.db
         .select({ count: sql<number>`count(*)::int` })
         .from(listings)
@@ -86,7 +125,7 @@ export const searchRouter = router({
 
       const totalHits = countResult?.count ?? 0;
 
-      // Get results
+      // Results
       const results = await ctx.db
         .select({
           id: listings.id,
@@ -116,7 +155,6 @@ export const searchRouter = router({
         .limit(input.limit)
         .offset(input.offset);
 
-      // Map to a consistent shape for the frontend
       const hits = results.map((r) => ({
         id: r.id,
         title: r.title,

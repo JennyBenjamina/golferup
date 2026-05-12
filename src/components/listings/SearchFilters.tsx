@@ -40,6 +40,7 @@ const categories = [
   { value: "balls", label: "Balls" },
   { value: "accessories", label: "Accessories" },
   { value: "training_aids", label: "Training Aids" },
+  { value: "miscellaneous", label: "Miscellaneous" },
 ];
 
 const conditions = [

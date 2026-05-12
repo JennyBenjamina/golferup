@@ -41,6 +41,8 @@ const categoryDescriptions: Record<string, string> = {
     "Headcovers, towels, tees, markers, divot tools, and more golf accessories.",
   training_aids:
     "Swing trainers, putting mats, alignment sticks, and other practice tools.",
+  miscellaneous:
+    "Unique golf items, collectibles, memorabilia, and anything else golf-related that doesn't fit another category.",
 };
 
 function CategoryContent({ slug }: { slug: string }) {

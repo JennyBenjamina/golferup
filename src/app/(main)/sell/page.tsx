@@ -17,7 +17,7 @@ const listingSchema = z.object({
   category: z.enum([
     "drivers", "woods", "hybrids", "irons", "wedges", "putters",
     "complete_sets", "bags", "push_carts", "rangefinders", "gps_devices",
-    "apparel", "shoes", "gloves", "balls", "accessories", "training_aids", "other",
+    "apparel", "shoes", "gloves", "balls", "accessories", "training_aids", "miscellaneous", "other",
   ]),
   brand: z.string().max(100).optional(),
   model: z.string().max(100).optional(),
@@ -57,6 +57,7 @@ const categories = [
   { value: "balls", label: "Balls" },
   { value: "accessories", label: "Accessories" },
   { value: "training_aids", label: "Training Aids" },
+  { value: "miscellaneous", label: "Miscellaneous" },
   { value: "other", label: "Other" },
 ];
 

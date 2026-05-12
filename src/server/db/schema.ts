@@ -51,6 +51,7 @@ export const listingCategoryEnum = pgEnum("listing_category", [
   "balls",
   "accessories",
   "training_aids",
+  "miscellaneous",
   "other",
 ]);
 

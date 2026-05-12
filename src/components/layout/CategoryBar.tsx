@@ -20,6 +20,7 @@ const categories = [
   { label: "Balls", value: "balls" },
   { label: "Accessories", value: "accessories" },
   { label: "Training Aids", value: "training_aids" },
+  { label: "Miscellaneous", value: "miscellaneous" },
 ];
 
 export function CategoryBar() {
