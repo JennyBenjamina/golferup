@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { useSession } from "next-auth/react";
@@ -16,14 +16,25 @@ function SearchContent() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const initialQuery = searchParams.get("q") ?? "";
-  const initialCategory = searchParams.get("category") ?? undefined;
+  const urlQuery = searchParams.get("q") ?? "";
+  const urlCategory = searchParams.get("category") ?? undefined;
 
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(urlQuery);
   const [filters, setFilters] = useState<SearchFilterValues>({
-    category: initialCategory,
+    category: urlCategory,
     sortBy: "relevance",
   });
+
+  // Sync state when URL params change (e.g. header search bar submits a new query)
+  useEffect(() => {
+    setQuery(urlQuery);
+  }, [urlQuery]);
+
+  useEffect(() => {
+    if (urlCategory !== filters.category) {
+      setFilters((prev) => ({ ...prev, category: urlCategory }));
+    }
+  }, [urlCategory]);
   const [saveSearchName, setSaveSearchName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
