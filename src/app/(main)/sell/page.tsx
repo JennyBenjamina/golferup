@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { trpc } from "@/lib/trpc";
-import { Camera, X, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ImageUpload } from "@/components/listings/ImageUpload";
 
 const listingSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(255),
@@ -97,46 +98,7 @@ export default function SellPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Photos */}
-        <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
-            Photos
-          </label>
-          <div className="grid grid-cols-4 gap-3">
-            {images.map((img, i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-lg overflow-hidden relative group"
-              >
-                <img
-                  src={img}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setImages((prev) => prev.filter((_, idx) => idx !== i))
-                  }
-                  className="absolute top-1 right-1 p-1 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3 h-3 text-white" />
-                </button>
-              </div>
-            ))}
-            {images.length < 8 && (
-              <button
-                type="button"
-                className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-emerald-400 hover:text-emerald-500 transition-colors"
-              >
-                <Camera className="w-6 h-6 mb-1" />
-                <span className="text-xs">Add Photo</span>
-              </button>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Add up to 8 photos. First photo will be the cover.
-          </p>
-        </div>
+        <ImageUpload images={images} onChange={setImages} maxImages={10} />
 
         {/* Title */}
         <div>
