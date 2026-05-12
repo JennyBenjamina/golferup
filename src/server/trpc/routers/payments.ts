@@ -27,7 +27,7 @@ export const paymentsRouter = router({
 
     if (!user) throw new TRPCError({ code: "NOT_FOUND" });
 
-    let stripeAccountId = user.stripeAccountId;
+    let stripeAccountId: string = user.stripeAccountId ?? "";
 
     // Create Connect account if they don't have one
     if (!stripeAccountId) {
