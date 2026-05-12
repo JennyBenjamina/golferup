@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   let event;
   try {
-    event = constructWebhookEvent(body, signature);
+    event = await constructWebhookEvent(body, signature);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json(

@@ -1,26 +1,20 @@
-import Stripe from "stripe";
+// Use dynamic import so the stripe package is never evaluated at build time.
+// This prevents "Neither apiKey nor config.authenticator provided" during `next build`.
 
-// Lazy-initialize Stripe so the build doesn't crash when env vars are missing
-let _stripe: Stripe | null = null;
+let _stripe: any = null;
 
-export function getStripe(): Stripe {
+async function getStripe() {
   if (!_stripe) {
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error("STRIPE_SECRET_KEY is not set.");
     }
+    const { default: Stripe } = await import("stripe");
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2026-04-22.dahlia",
     });
   }
   return _stripe;
 }
-
-// Keep backward-compatible export
-export const stripe = new Proxy({} as Stripe, {
-  get(_, prop) {
-    return (getStripe() as any)[prop];
-  },
-});
 
 const PLATFORM_FEE_PERCENT = 10; // 10% platform fee
 
@@ -31,6 +25,7 @@ export async function createConnectAccount(params: {
   email: string;
   userId: string;
 }) {
+  const stripe = await getStripe();
   const account = await stripe.accounts.create({
     type: "express",
     email: params.email,
@@ -54,6 +49,7 @@ export async function createOnboardingLink(params: {
   returnUrl: string;
   refreshUrl: string;
 }) {
+  const stripe = await getStripe();
   const accountLink = await stripe.accountLinks.create({
     account: params.stripeAccountId,
     return_url: params.returnUrl,
@@ -68,6 +64,7 @@ export async function createOnboardingLink(params: {
  * Check if a Connect account has completed onboarding
  */
 export async function checkAccountStatus(stripeAccountId: string) {
+  const stripe = await getStripe();
   const account = await stripe.accounts.retrieve(stripeAccountId);
 
   return {
@@ -82,6 +79,7 @@ export async function checkAccountStatus(stripeAccountId: string) {
  * Create a Stripe login link so the seller can access their dashboard
  */
 export async function createDashboardLink(stripeAccountId: string) {
+  const stripe = await getStripe();
   const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
   return loginLink;
 }
@@ -97,6 +95,7 @@ export async function createPaymentIntent(params: {
   buyerId: string;
   sellerId: string;
 }) {
+  const stripe = await getStripe();
   const amountInCents = Math.round(params.amount * 100);
   const platformFeeInCents = Math.round(
     amountInCents * (PLATFORM_FEE_PERCENT / 100)
@@ -106,7 +105,7 @@ export async function createPaymentIntent(params: {
     amount: amountInCents,
     currency: "usd",
     payment_method_types: ["card"],
-    capture_method: "manual", // Hold funds, capture later when confirmed
+    capture_method: "manual",
     application_fee_amount: platformFeeInCents,
     transfer_data: {
       destination: params.sellerStripeAccountId,
@@ -126,6 +125,7 @@ export async function createPaymentIntent(params: {
  * Capture a held payment (finalize the transaction)
  */
 export async function capturePayment(paymentIntentId: string) {
+  const stripe = await getStripe();
   return stripe.paymentIntents.capture(paymentIntentId);
 }
 
@@ -133,6 +133,7 @@ export async function capturePayment(paymentIntentId: string) {
  * Cancel/refund a payment intent
  */
 export async function cancelPayment(paymentIntentId: string) {
+  const stripe = await getStripe();
   return stripe.paymentIntents.cancel(paymentIntentId);
 }
 
@@ -143,6 +144,7 @@ export async function refundPayment(
   paymentIntentId: string,
   reason?: "duplicate" | "fraudulent" | "requested_by_customer"
 ) {
+  const stripe = await getStripe();
   return stripe.refunds.create({
     payment_intent: paymentIntentId,
     reason,
@@ -154,10 +156,11 @@ export async function refundPayment(
 /**
  * Construct and verify a Stripe webhook event
  */
-export function constructWebhookEvent(
+export async function constructWebhookEvent(
   payload: string | Buffer,
   signature: string
 ) {
+  const stripe = await getStripe();
   return stripe.webhooks.constructEvent(
     payload,
     signature,
