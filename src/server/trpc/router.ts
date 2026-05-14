@@ -10,6 +10,7 @@ import { messagesRouter } from "./routers/messages";
 import { postsRouter } from "./routers/posts";
 import { commentsRouter } from "./routers/comments";
 import { followsRouter } from "./routers/follows";
+import { savedListingsRouter } from "./routers/saved-listings";
 
 export const appRouter = router({
   listings: listingsRouter,
@@ -23,6 +24,7 @@ export const appRouter = router({
   posts: postsRouter,
   comments: commentsRouter,
   follows: followsRouter,
+  savedListings: savedListingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

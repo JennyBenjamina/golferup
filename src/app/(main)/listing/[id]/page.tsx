@@ -17,6 +17,7 @@ import {
 import { formatPrice, formatCondition, formatCategory, timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { OfferModal } from "@/components/listings/OfferModal";
 
 export default function ListingDetailPage({
@@ -42,6 +43,20 @@ export default function ListingDetailPage({
   const startConversation = trpc.messages.startConversation.useMutation({
     onSuccess: () => {
       router.push("/messages");
+    },
+  });
+
+  const utils = trpc.useUtils();
+  const { data: savedData } = trpc.savedListings.checkSaved.useQuery(
+    { listingIds: [id] },
+    { enabled: !!session }
+  );
+  const isSaved = savedData?.savedIds?.includes(id) ?? false;
+
+  const toggleSave = trpc.savedListings.toggle.useMutation({
+    onSuccess: () => {
+      utils.savedListings.checkSaved.invalidate();
+      utils.savedListings.list.invalidate();
     },
   });
 
@@ -169,8 +184,21 @@ export default function ListingDetailPage({
               <h1 className="text-xl text-gray-800 mt-1">{listing.title}</h1>
             </div>
             <div className="flex gap-2">
-              <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
-                <Heart className="w-5 h-5 text-gray-600" />
+              <button
+                onClick={() => session && toggleSave.mutate({ listingId: id })}
+                className={cn(
+                  "p-2 rounded-full transition-colors",
+                  isSaved
+                    ? "bg-red-50 hover:bg-red-100"
+                    : "bg-gray-100 hover:bg-gray-200"
+                )}
+              >
+                <Heart
+                  className={cn(
+                    "w-5 h-5 transition-colors",
+                    isSaved ? "fill-red-500 text-red-500" : "text-gray-600"
+                  )}
+                />
               </button>
               <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
                 <Share2 className="w-5 h-5 text-gray-600" />

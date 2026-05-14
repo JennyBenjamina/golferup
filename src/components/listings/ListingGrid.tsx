@@ -1,4 +1,8 @@
+"use client";
+
 import { ListingCard } from "./ListingCard";
+import { trpc } from "@/lib/trpc";
+import { useSession } from "next-auth/react";
 
 interface ListingGridProps {
   listings: Array<{
@@ -20,6 +24,17 @@ interface ListingGridProps {
 }
 
 export function ListingGrid({ listings }: ListingGridProps) {
+  const { data: session } = useSession();
+  const listingIds = listings.map(({ listing }) => listing.id);
+
+  // Batch-check which listings are saved by the current user
+  const { data: savedData } = trpc.savedListings.checkSaved.useQuery(
+    { listingIds },
+    { enabled: !!session && listingIds.length > 0 }
+  );
+
+  const savedIds = new Set(savedData?.savedIds ?? []);
+
   if (listings.length === 0) {
     return (
       <div className="text-center py-16">
@@ -51,7 +66,12 @@ export function ListingGrid({ listings }: ListingGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {listings.map(({ listing, seller }) => (
-        <ListingCard key={listing.id} listing={listing} seller={seller} />
+        <ListingCard
+          key={listing.id}
+          listing={listing}
+          seller={seller}
+          isSaved={savedIds.has(listing.id)}
+        />
       ))}
     </div>
   );

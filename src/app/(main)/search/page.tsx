@@ -44,6 +44,14 @@ function SearchContent() {
     hand: filters.hand,
   });
 
+  // Check which search results are saved
+  const hitIds = data?.hits?.map((h) => h.id) ?? [];
+  const { data: savedData } = trpc.savedListings.checkSaved.useQuery(
+    { listingIds: hitIds },
+    { enabled: !!session && hitIds.length > 0 }
+  );
+  const savedIds = new Set(savedData?.savedIds ?? []);
+
   const saveSearch = trpc.savedSearches.create.useMutation({
     onSuccess: () => {
       setShowSaveDialog(false);
@@ -175,6 +183,7 @@ function SearchContent() {
                 name: hit.sellerName,
                 image: hit.sellerImage,
               }}
+              isSaved={savedIds.has(hit.id)}
             />
           ))}
         </div>

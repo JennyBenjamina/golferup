@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Heart, MapPin } from "lucide-react";
 import { formatPrice, formatCondition, timeAgo } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 interface ListingCardProps {
   listing: {
@@ -17,10 +22,30 @@ interface ListingCardProps {
     name: string | null;
     image: string | null;
   };
+  isSaved?: boolean;
 }
 
-export function ListingCard({ listing, seller }: ListingCardProps) {
+export function ListingCard({ listing, seller, isSaved: initialSaved }: ListingCardProps) {
   const primaryImage = listing.images?.[0];
+  const { data: session } = useSession();
+  const utils = trpc.useUtils();
+
+  const toggle = trpc.savedListings.toggle.useMutation({
+    onSuccess: () => {
+      utils.savedListings.checkSaved.invalidate();
+      utils.savedListings.list.invalidate();
+    },
+  });
+
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!session) return;
+    toggle.mutate({ listingId: listing.id });
+  };
+
+  // Use the prop if provided, or check via query
+  const saved = initialSaved ?? false;
 
   return (
     <Link
@@ -53,13 +78,20 @@ export function ListingCard({ listing, seller }: ListingCardProps) {
           </div>
         )}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            // TODO: toggle save
-          }}
-          className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+          onClick={handleToggleSave}
+          className={cn(
+            "absolute top-2 right-2 p-2 rounded-full transition-colors",
+            saved
+              ? "bg-red-50 hover:bg-red-100"
+              : "bg-white/80 backdrop-blur-sm hover:bg-white"
+          )}
         >
-          <Heart className="w-4 h-4 text-gray-600" />
+          <Heart
+            className={cn(
+              "w-4 h-4 transition-colors",
+              saved ? "fill-red-500 text-red-500" : "text-gray-600"
+            )}
+          />
         </button>
         <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-gray-700">
           {formatCondition(listing.condition)}
