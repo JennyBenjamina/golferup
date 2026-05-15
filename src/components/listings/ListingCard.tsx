@@ -23,9 +23,10 @@ interface ListingCardProps {
     image: string | null;
   };
   isSaved?: boolean;
+  distanceMiles?: number;
 }
 
-export function ListingCard({ listing, seller, isSaved: initialSaved }: ListingCardProps) {
+export function ListingCard({ listing, seller, isSaved: initialSaved, distanceMiles }: ListingCardProps) {
   const primaryImage = listing.images?.[0];
   const { data: session } = useSession();
   const utils = trpc.useUtils();
@@ -107,13 +108,19 @@ export function ListingCard({ listing, seller, isSaved: initialSaved }: ListingC
           {listing.title}
         </p>
         <div className="flex items-center justify-between mt-2">
-          {listing.locationCity && (
+          {listing.locationCity ? (
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <MapPin className="w-3 h-3" />
-              {listing.locationCity}
-              {listing.locationState ? `, ${listing.locationState}` : ""}
+              {distanceMiles !== undefined
+                ? `${distanceMiles} mi`
+                : `${listing.locationCity}${listing.locationState ? `, ${listing.locationState}` : ""}`}
             </span>
-          )}
+          ) : distanceMiles !== undefined ? (
+            <span className="flex items-center gap-1 text-xs text-gray-500">
+              <MapPin className="w-3 h-3" />
+              {distanceMiles} mi
+            </span>
+          ) : null}
           <span className="text-xs text-gray-400">
             {timeAgo(listing.createdAt)}
           </span>

@@ -84,10 +84,32 @@ export default function SellPage() {
     },
   });
 
-  const onSubmit = (data: ListingFormData) => {
+  const onSubmit = async (data: ListingFormData) => {
+    let locationLat: number | undefined;
+    let locationLng: number | undefined;
+
+    // Auto-geocode city/state to lat/lng for location-based search
+    if (data.locationCity || data.locationState) {
+      try {
+        const q = [data.locationCity, data.locationState].filter(Boolean).join(", ");
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=us&limit=1`
+        );
+        const results = await res.json();
+        if (results.length > 0) {
+          locationLat = parseFloat(results[0].lat);
+          locationLng = parseFloat(results[0].lon);
+        }
+      } catch {
+        // Geocoding failed — proceed without coordinates
+      }
+    }
+
     createListing.mutate({
       ...data,
       images,
+      locationLat,
+      locationLng,
     });
   };
 

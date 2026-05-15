@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LocationSearchModal } from "./LocationSearchModal";
 
 export interface SearchFilterValues {
   category?: string;
@@ -12,8 +13,11 @@ export interface SearchFilterValues {
   priceMin?: number;
   priceMax?: number;
   locationState?: string;
+  locationLat?: number;
+  locationLng?: number;
+  locationLabel?: string;
   radiusMiles?: number;
-  sortBy: "relevance" | "price_asc" | "price_desc" | "newest";
+  sortBy: "relevance" | "price_asc" | "price_desc" | "newest" | "nearest";
 }
 
 interface SearchFiltersProps {
@@ -69,6 +73,7 @@ const popularBrands = [
 
 const sortOptions = [
   { value: "relevance", label: "Best Match" },
+  { value: "nearest", label: "Nearest First" },
   { value: "newest", label: "Newest First" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
@@ -80,10 +85,13 @@ export function SearchFilters({
   totalResults,
 }: SearchFiltersProps) {
   const [expanded, setExpanded] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const update = (partial: Partial<SearchFilterValues>) => {
     onChange({ ...values, ...partial });
   };
+
+  const hasLocationFilter = values.locationLat !== undefined && values.locationLng !== undefined;
 
   const activeFilterCount = [
     values.category,
@@ -93,6 +101,7 @@ export function SearchFilters({
     values.priceMin,
     values.priceMax,
     values.locationState,
+    hasLocationFilter,
   ].filter(Boolean).length;
 
   const clearAll = () => {
@@ -193,6 +202,19 @@ export function SearchFilters({
             <FilterPill
               label={values.locationState}
               onRemove={() => update({ locationState: undefined })}
+            />
+          )}
+          {hasLocationFilter && (
+            <FilterPill
+              label={`${values.locationLabel || "Location"} · ${values.radiusMiles ?? 25} mi`}
+              onRemove={() =>
+                update({
+                  locationLat: undefined,
+                  locationLng: undefined,
+                  locationLabel: undefined,
+                  radiusMiles: undefined,
+                })
+              }
             />
           )}
         </div>
@@ -321,23 +343,48 @@ export function SearchFilters({
             </div>
           </div>
 
-          {/* Location / state */}
+          {/* Location */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">
-              State
+              Location
             </label>
-            <input
-              type="text"
-              placeholder="e.g., CA"
-              value={values.locationState ?? ""}
-              onChange={(e) =>
-                update({ locationState: e.target.value || undefined })
-              }
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
+            <button
+              onClick={() => setLocationModalOpen(true)}
+              className={cn(
+                "w-full text-sm border rounded-lg px-3 py-2 text-left flex items-center gap-2 transition-colors",
+                hasLocationFilter
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+              )}
+            >
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">
+                {hasLocationFilter
+                  ? `${values.locationLabel || "Set"} · ${values.radiusMiles ?? 25} mi`
+                  : "Set location"}
+              </span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Location search modal */}
+      <LocationSearchModal
+        open={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onApply={({ lat, lng, label, radiusMiles: r }) => {
+          update({
+            locationLat: lat,
+            locationLng: lng,
+            locationLabel: label,
+            radiusMiles: r,
+          });
+        }}
+        initialLat={values.locationLat}
+        initialLng={values.locationLng}
+        initialLabel={values.locationLabel}
+        initialRadius={values.radiusMiles}
+      />
     </div>
   );
 }

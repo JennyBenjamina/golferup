@@ -42,6 +42,9 @@ function SearchContent() {
     query,
     ...filters,
     hand: filters.hand,
+    locationLat: filters.locationLat,
+    locationLng: filters.locationLng,
+    radiusMiles: filters.radiusMiles,
   });
 
   // Check which search results are saved
@@ -79,6 +82,7 @@ function SearchContent() {
       priceMin: filters.priceMin?.toString(),
       priceMax: filters.priceMax?.toString(),
       locationState: filters.locationState,
+      radiusMiles: filters.radiusMiles,
     });
   };
 
@@ -166,7 +170,7 @@ function SearchContent() {
         </div>
       ) : data && data.hits.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {data.hits.map((hit) => (
+          {data.hits.map((hit: any) => (
             <ListingCard
               key={hit.id}
               listing={{
@@ -184,6 +188,7 @@ function SearchContent() {
                 image: hit.sellerImage,
               }}
               isSaved={savedIds.has(hit.id)}
+              distanceMiles={hit.distanceMiles}
             />
           ))}
         </div>

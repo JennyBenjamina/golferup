@@ -21,6 +21,7 @@
     "@trpc/react-query": "^11.17.0",
     "@trpc/server": "^11.17.0",
     "cloudinary": "^2.6.1",
+    "leaflet": "^1.9.4",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.14.0",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.17",
     "@types/node": "^20.19.40",
     "@types/react": "^19",
     "@types/react-dom": "^19",
