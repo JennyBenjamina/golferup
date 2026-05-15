@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { useSession } from "next-auth/react";
+import { useLocation } from "@/contexts/LocationContext";
 import {
   SearchFilters,
   type SearchFilterValues,
@@ -15,14 +16,30 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const { location } = useLocation();
 
   const urlQuery = searchParams.get("q") ?? "";
   const urlCategory = searchParams.get("category") ?? undefined;
 
+  // Location can come from URL params (e.g. "See all near you" link) or shared context
+  const urlLat = searchParams.get("lat") ? parseFloat(searchParams.get("lat")!) : undefined;
+  const urlLng = searchParams.get("lng") ? parseFloat(searchParams.get("lng")!) : undefined;
+  const urlRadius = searchParams.get("radius") ? parseInt(searchParams.get("radius")!) : undefined;
+  const urlLabel = searchParams.get("label") ?? undefined;
+
+  const initialLat = urlLat ?? location?.lat;
+  const initialLng = urlLng ?? location?.lng;
+  const initialRadius = urlRadius ?? location?.radiusMiles;
+  const initialLabel = urlLabel ?? location?.label;
+
   const [query, setQuery] = useState(urlQuery);
   const [filters, setFilters] = useState<SearchFilterValues>({
     category: urlCategory,
-    sortBy: "relevance",
+    sortBy: initialLat ? "nearest" : "relevance",
+    locationLat: initialLat,
+    locationLng: initialLng,
+    radiusMiles: initialRadius,
+    locationLabel: initialLabel,
   });
 
   // Sync state when URL params change (e.g. header search bar submits a new query)
@@ -35,6 +52,20 @@ function SearchContent() {
       setFilters((prev) => ({ ...prev, category: urlCategory }));
     }
   }, [urlCategory]);
+
+  // Sync location from URL params when they change
+  useEffect(() => {
+    if (urlLat && urlLng && urlRadius) {
+      setFilters((prev) => ({
+        ...prev,
+        locationLat: urlLat,
+        locationLng: urlLng,
+        radiusMiles: urlRadius,
+        locationLabel: urlLabel,
+        sortBy: prev.sortBy === "relevance" ? "nearest" : prev.sortBy,
+      }));
+    }
+  }, [urlLat, urlLng, urlRadius, urlLabel]);
   const [saveSearchName, setSaveSearchName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 

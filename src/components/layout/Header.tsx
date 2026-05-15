@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useLocation } from "@/contexts/LocationContext";
+import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 
 function UnreadBadge() {
   const { data: session } = useSession();
@@ -33,18 +35,30 @@ import {
   Users,
   Settings,
   Heart,
+  MapPin,
 } from "lucide-react";
 
 export function Header() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { location, setLocation } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Include location params in search if location is set
+      const params = new URLSearchParams();
+      params.set("q", searchQuery.trim());
+      if (location) {
+        params.set("lat", String(location.lat));
+        params.set("lng", String(location.lng));
+        params.set("radius", String(location.radiusMiles));
+        params.set("label", location.label);
+      }
+      router.push(`/search?${params.toString()}`);
     }
   };
 
@@ -62,19 +76,31 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Search bar - desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search clubs, bags, apparel..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
-          </form>
+          {/* Location + Search bar - desktop */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8 items-center gap-2">
+            <button
+              onClick={() => setLocationModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors shrink-0"
+              title={location ? `${location.label} · ${location.radiusMiles} mi` : "Set location"}
+            >
+              <MapPin className={`w-4 h-4 ${location ? "text-emerald-600" : "text-gray-400"}`} />
+              <span className={`max-w-[120px] truncate ${location ? "text-emerald-700 font-medium" : "text-gray-500"}`}>
+                {location ? location.label : "Location"}
+              </span>
+            </button>
+            <form onSubmit={handleSearch} className="flex-1">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search clubs, bags, apparel..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+            </form>
+          </div>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
@@ -267,6 +293,19 @@ export function Header() {
           </div>
         </div>
       )}
+
+      {/* Location modal */}
+      <LocationSearchModal
+        open={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onApply={(loc) => {
+          setLocation(loc);
+        }}
+        initialLat={location?.lat}
+        initialLng={location?.lng}
+        initialLabel={location?.label}
+        initialRadius={location?.radiusMiles}
+      />
     </header>
   );
 }

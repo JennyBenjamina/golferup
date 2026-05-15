@@ -2,7 +2,9 @@
 
 import { Suspense } from "react";
 import { CategoryBar } from "@/components/layout/CategoryBar";
+import { LocationBar } from "@/components/layout/LocationBar";
 import { ListingGrid } from "@/components/listings/ListingGrid";
+import { NearYouSection } from "@/components/listings/NearYouSection";
 import { trpc } from "@/lib/trpc";
 import { useSearchParams } from "next/navigation";
 
@@ -38,6 +40,7 @@ function ListingFeed() {
 export default function HomePage() {
   return (
     <>
+      <LocationBar />
       <Suspense>
         <CategoryBar />
       </Suspense>
@@ -50,6 +53,14 @@ export default function HomePage() {
             Join the community of golf enthusiasts. Find great deals on clubs,
             bags, apparel, and everything golf.
           </p>
+        </div>
+
+        {/* Near You — shown when location is set */}
+        <NearYouSection />
+
+        {/* All listings */}
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">All Listings</h2>
         </div>
         <Suspense>
           <ListingFeed />
