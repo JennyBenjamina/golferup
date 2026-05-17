@@ -4,22 +4,22 @@ import { listings, users } from "@/server/db/schema";
 import { eq, and, gte, lte, ilike, desc, asc, sql } from "drizzle-orm";
 
 /**
- * Haversine distance in miles between two lat/lng points, computed in SQL.
- * Returns a SQL fragment that evaluates to the distance in miles.
+ * Haversine distance in miles between a search point and a listing.
+ * Falls back to the seller's lat/lng when the listing has no coordinates,
+ * so sellers who only set location on their profile still appear in geo search.
  */
-function haversineDistance(
-  lat: number,
-  lng: number,
-  latCol: typeof listings.locationLat,
-  lngCol: typeof listings.locationLng
-) {
+function haversineDistance(lat: number, lng: number) {
+  // COALESCE: use listing coords, fall back to seller coords
+  const effectiveLat = sql`coalesce(${listings.locationLat}, ${users.locationLat})`;
+  const effectiveLng = sql`coalesce(${listings.locationLng}, ${users.locationLng})`;
+
   return sql<number>`(
     3959 * acos(
       cos(radians(${lat}))
-      * cos(radians(${latCol}))
-      * cos(radians(${lngCol}) - radians(${lng}))
+      * cos(radians(${effectiveLat}))
+      * cos(radians(${effectiveLng}) - radians(${lng}))
       + sin(radians(${lat}))
-      * sin(radians(${latCol}))
+      * sin(radians(${effectiveLat}))
     )
   )`;
 }
@@ -124,16 +124,12 @@ export const searchRouter = router({
         input.radiusMiles !== undefined;
 
       if (hasGeo) {
-        // Only consider listings that actually have lat/lng set
-        conditions.push(sql`${listings.locationLat} IS NOT NULL`);
-        conditions.push(sql`${listings.locationLng} IS NOT NULL`);
-
-        const distExpr = haversineDistance(
-          input.locationLat!,
-          input.locationLng!,
-          listings.locationLat,
-          listings.locationLng
+        // Only include listings/sellers that have SOME location data
+        conditions.push(
+          sql`(${listings.locationLat} IS NOT NULL OR ${users.locationLat} IS NOT NULL)`
         );
+
+        const distExpr = haversineDistance(input.locationLat!, input.locationLng!);
         conditions.push(sql`${distExpr} <= ${input.radiusMiles!}`);
       }
 
@@ -141,12 +137,7 @@ export const searchRouter = router({
       let orderBy;
       if (input.sortBy === "nearest" && hasGeo) {
         // Sort by distance ascending (closest first)
-        const distExpr = haversineDistance(
-          input.locationLat!,
-          input.locationLng!,
-          listings.locationLat,
-          listings.locationLng
-        );
+        const distExpr = haversineDistance(input.locationLat!, input.locationLng!);
         orderBy = asc(distExpr);
       } else if (input.sortBy === "relevance" && hasQuery) {
         // Rank by full-text relevance (higher score = better match)
@@ -204,9 +195,7 @@ export const searchRouter = router({
       if (hasGeo) {
         selectColumns.distanceMiles = haversineDistance(
           input.locationLat!,
-          input.locationLng!,
-          listings.locationLat,
-          listings.locationLng
+          input.locationLng!
         );
       }
 

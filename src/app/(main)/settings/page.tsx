@@ -5,8 +5,9 @@ import { trpc } from "@/lib/trpc";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, MapPin, Navigation } from "lucide-react";
 import { useState } from "react";
+import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 
 const profileSchema = z.object({
   name: z.string().min(1).max(255),
@@ -20,7 +21,9 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { data: me } = trpc.users.me.useQuery();
+  const utils = trpc.useUtils();
   const [saved, setSaved] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const {
     register,
@@ -41,18 +44,80 @@ export default function SettingsPage() {
   const updateProfile = trpc.users.updateProfile.useMutation({
     onSuccess: () => {
       setSaved(true);
+      utils.users.me.invalidate();
       setTimeout(() => setSaved(false), 2000);
     },
   });
 
-  const onSubmit = (data: ProfileFormData) => {
-    updateProfile.mutate(data);
+  const onSubmit = async (data: ProfileFormData) => {
+    let locationLat: number | undefined;
+    let locationLng: number | undefined;
+
+    // Auto-geocode city/state to lat/lng
+    if (data.locationCity || data.locationState) {
+      try {
+        const q = [data.locationCity, data.locationState].filter(Boolean).join(", ");
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=us&limit=1`
+        );
+        const results = await res.json();
+        if (results.length > 0) {
+          locationLat = parseFloat(results[0].lat);
+          locationLng = parseFloat(results[0].lon);
+        }
+      } catch {
+        // Geocoding failed — save without coordinates
+      }
+    }
+
+    updateProfile.mutate({ ...data, locationLat, locationLng });
   };
+
+  const hasLocation = me?.locationLat && me?.locationLng;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
 
+      {/* Location card — prominent at the top */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <MapPin className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Your Location</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Your location is used as the default for all your listings. Buyers
+          search by location to find gear nearby.
+        </p>
+
+        {hasLocation ? (
+          <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-800">
+                {me?.locationCity}
+                {me?.locationState ? `, ${me.locationState}` : ""}
+              </span>
+            </div>
+            <button
+              onClick={() => setLocationModalOpen(true)}
+              className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setLocationModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
+          >
+            <Navigation className="w-4 h-4" />
+            Set your location to help buyers find your gear
+          </button>
+        )}
+      </div>
+
+      {/* Profile card */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
 
@@ -139,6 +204,32 @@ export default function SettingsPage() {
           </span>
         </p>
       </div>
+
+      {/* Location modal — also updates profile */}
+      <LocationSearchModal
+        open={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        onApply={async ({ lat, lng, label }) => {
+          // Parse city/state from the label
+          const parts = label.split(",").map((p) => p.trim());
+          const city = parts[0] || undefined;
+          const state = parts[1] || undefined;
+          updateProfile.mutate({
+            locationCity: city,
+            locationState: state,
+            locationLat: lat,
+            locationLng: lng,
+          });
+        }}
+        initialLat={me?.locationLat ?? undefined}
+        initialLng={me?.locationLng ?? undefined}
+        initialLabel={
+          me?.locationCity
+            ? `${me.locationCity}${me.locationState ? `, ${me.locationState}` : ""}`
+            : undefined
+        }
+        initialRadius={25}
+      />
     </div>
   );
 }

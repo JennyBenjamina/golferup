@@ -124,10 +124,37 @@ export const listingsRouter = router({
   create: protectedProcedure
     .input(createListingSchema)
     .mutation(async ({ ctx, input }) => {
+      // If listing doesn't have location, inherit from seller's profile
+      let { locationCity, locationState, locationLat, locationLng } = input;
+
+      if (!locationCity && !locationState && !locationLat && !locationLng) {
+        const [seller] = await ctx.db
+          .select({
+            locationCity: users.locationCity,
+            locationState: users.locationState,
+            locationLat: users.locationLat,
+            locationLng: users.locationLng,
+          })
+          .from(users)
+          .where(eq(users.id, ctx.userId))
+          .limit(1);
+
+        if (seller) {
+          locationCity = seller.locationCity ?? undefined;
+          locationState = seller.locationState ?? undefined;
+          locationLat = seller.locationLat ?? undefined;
+          locationLng = seller.locationLng ?? undefined;
+        }
+      }
+
       const [listing] = await ctx.db
         .insert(listings)
         .values({
           ...input,
+          locationCity,
+          locationState,
+          locationLat,
+          locationLng,
           sellerId: ctx.userId,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         })
