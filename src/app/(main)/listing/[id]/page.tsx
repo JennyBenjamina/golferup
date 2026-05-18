@@ -234,6 +234,31 @@ export default function ListingDetailPage({
                 {listing.loft}
               </span>
             )}
+            {listing.shaft && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                {listing.shaft}
+              </span>
+            )}
+            {listing.size && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                Size {listing.size}
+              </span>
+            )}
+            {listing.gender && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                {listing.gender === "mens" ? "Men's" : listing.gender === "womens" ? "Women's" : "Unisex"}
+              </span>
+            )}
+            {listing.wheelCount && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                {listing.wheelCount}-Wheel
+              </span>
+            )}
+            {listing.color && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                {listing.color}
+              </span>
+            )}
           </div>
 
           {listing.locationCity && (

@@ -23,14 +23,31 @@ const listingSchema = z.object({
   ]),
   brand: z.string().max(100).optional(),
   model: z.string().max(100).optional(),
+  // Club-specific
   flex: z.string().max(50).optional(),
   loft: z.string().max(50).optional(),
+  shaft: z.string().max(100).optional(),
   hand: z.enum(["right", "left"]).optional(),
+  // Apparel / shoes / gloves
+  size: z.string().max(50).optional(),
+  gender: z.string().max(20).optional(),
+  // General
+  color: z.string().max(50).optional(),
+  // Push carts
+  wheelCount: z.string().max(10).optional(),
+  // Location (handled separately)
   locationCity: z.string().max(255).optional(),
   locationState: z.string().max(100).optional(),
 });
 
 type ListingFormData = z.infer<typeof listingSchema>;
+
+// Category groups for determining which fields to show
+const CLUB_CATEGORIES = ["drivers", "woods", "hybrids", "irons", "wedges", "putters"];
+const SIZED_APPAREL_CATEGORIES = ["apparel", "shoes"];
+const GLOVES_CATEGORY = "gloves";
+const PUSH_CARTS_CATEGORY = "push_carts";
+const COMPLETE_SETS_CATEGORY = "complete_sets";
 
 const conditions = [
   { value: "new", label: "New" },
@@ -81,6 +98,7 @@ export default function SellPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
@@ -90,6 +108,13 @@ export default function SellPage() {
       hand: "right",
     },
   });
+
+  const selectedCategory = watch("category");
+  const isClub = CLUB_CATEGORIES.includes(selectedCategory);
+  const isCompleteSet = selectedCategory === COMPLETE_SETS_CATEGORY;
+  const isSizedApparel = SIZED_APPAREL_CATEGORIES.includes(selectedCategory);
+  const isGloves = selectedCategory === GLOVES_CATEGORY;
+  const isPushCart = selectedCategory === PUSH_CARTS_CATEGORY;
 
   const createListing = trpc.listings.create.useMutation({
     onSuccess: (listing) => {
@@ -249,41 +274,217 @@ export default function SellPage() {
           </div>
         </div>
 
-        {/* Golf-specific fields */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Hand
-            </label>
-            <select
-              {...register("hand")}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
-            >
-              <option value="right">Right</option>
-              <option value="left">Left</option>
-            </select>
+        {/* Category-specific fields */}
+        {isClub && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Hand
+                </label>
+                <select
+                  {...register("hand")}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+                >
+                  <option value="right">Right</option>
+                  <option value="left">Left</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Shaft
+                </label>
+                <input
+                  {...register("shaft")}
+                  placeholder="e.g., Ventus Blue 6S"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Flex
+                </label>
+                <select
+                  {...register("flex")}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Select flex</option>
+                  <option value="Ladies">Ladies</option>
+                  <option value="Senior">Senior</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Stiff">Stiff</option>
+                  <option value="X-Stiff">X-Stiff</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Loft
+                </label>
+                <input
+                  {...register("loft")}
+                  placeholder="e.g., 10.5°"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {isCompleteSet && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Hand
+              </label>
+              <select
+                {...register("hand")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Flex
+              </label>
+              <select
+                {...register("flex")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select flex</option>
+                <option value="Ladies">Ladies</option>
+                <option value="Senior">Senior</option>
+                <option value="Regular">Regular</option>
+                <option value="Stiff">Stiff</option>
+                <option value="X-Stiff">X-Stiff</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Flex
-            </label>
-            <input
-              {...register("flex")}
-              placeholder="e.g., Stiff"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            />
+        )}
+
+        {isSizedApparel && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Size
+              </label>
+              <select
+                {...register("size")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select size</option>
+                {selectedCategory === "shoes" ? (
+                  <>
+                    <option value="7">7</option>
+                    <option value="7.5">7.5</option>
+                    <option value="8">8</option>
+                    <option value="8.5">8.5</option>
+                    <option value="9">9</option>
+                    <option value="9.5">9.5</option>
+                    <option value="10">10</option>
+                    <option value="10.5">10.5</option>
+                    <option value="11">11</option>
+                    <option value="11.5">11.5</option>
+                    <option value="12">12</option>
+                    <option value="12.5">12.5</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="XS">XS</option>
+                    <option value="S">Small</option>
+                    <option value="M">Medium</option>
+                    <option value="L">Large</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="XXXL">XXXL</option>
+                  </>
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Gender
+              </label>
+              <select
+                {...register("gender")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select</option>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Loft
-            </label>
-            <input
-              {...register("loft")}
-              placeholder="e.g., 10.5°"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            />
+        )}
+
+        {isGloves && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Hand
+              </label>
+              <select
+                {...register("hand")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="right">Right (worn on left hand)</option>
+                <option value="left">Left (worn on right hand)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Size
+              </label>
+              <select
+                {...register("size")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select size</option>
+                <option value="S">Small</option>
+                <option value="M/L">Medium/Large</option>
+                <option value="L">Large</option>
+                <option value="XL">XL</option>
+                <option value="Cadet S">Cadet Small</option>
+                <option value="Cadet M/L">Cadet M/L</option>
+                <option value="Cadet L">Cadet Large</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
+
+        {isPushCart && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Wheels
+              </label>
+              <select
+                {...register("wheelCount")}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select</option>
+                <option value="3">3-Wheel</option>
+                <option value="4">4-Wheel</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Color
+              </label>
+              <input
+                {...register("color")}
+                placeholder="e.g., Black, White"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         <div>

@@ -171,7 +171,12 @@ export const listings = pgTable(
     model: varchar("model", { length: 100 }),
     flex: varchar("flex", { length: 50 }),
     loft: varchar("loft", { length: 50 }),
+    shaft: varchar("shaft", { length: 100 }),
     hand: handEnum("hand"),
+    size: varchar("size", { length: 50 }),
+    gender: varchar("gender", { length: 20 }),
+    color: varchar("color", { length: 50 }),
+    wheelCount: varchar("wheel_count", { length: 10 }),
     images: text("images")
       .array()
       .default([])
