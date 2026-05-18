@@ -49,7 +49,7 @@ export function ImageUpload({
         formData.append("folder", folder);
         formData.append(
           "transformation",
-          "c_limit,w_1600,h_1600,q_auto,f_auto"
+          "c_limit,w_1600,h_1600,q_auto,f_auto",
         );
 
         const xhr = new XMLHttpRequest();
@@ -60,8 +60,8 @@ export function ImageUpload({
               const pct = Math.round((e.loaded / e.total) * 100);
               setUploading((prev) =>
                 prev.map((u) =>
-                  u.id === uploadId ? { ...u, progress: pct } : u
-                )
+                  u.id === uploadId ? { ...u, progress: pct } : u,
+                ),
               );
             }
           });
@@ -75,11 +75,13 @@ export function ImageUpload({
             }
           });
 
-          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+          xhr.addEventListener("error", () =>
+            reject(new Error("Upload failed")),
+          );
 
           xhr.open(
             "POST",
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
           );
           xhr.send(formData);
         });
@@ -89,7 +91,7 @@ export function ImageUpload({
         throw err;
       }
     },
-    []
+    [],
   );
 
   const handleFiles = useCallback(
@@ -121,7 +123,7 @@ export function ImageUpload({
         newUploading.map(async (u) => {
           const url = await uploadToCloudinary(u.file, u.id);
           return { id: u.id, url };
-        })
+        }),
       );
 
       const newUrls: string[] = [];
@@ -152,16 +154,14 @@ export function ImageUpload({
       // Clean up previews after a delay for failed ones
       if (failedIds.length > 0) {
         setTimeout(() => {
-          setUploading((prev) =>
-            prev.filter((u) => !failedIds.includes(u.id))
-          );
+          setUploading((prev) => prev.filter((u) => !failedIds.includes(u.id)));
         }, 3000);
       }
 
       // Revoke object URLs
       newUploading.forEach((u) => URL.revokeObjectURL(u.preview));
     },
-    [images, onChange, remainingSlots, uploadToCloudinary]
+    [images, onChange, remainingSlots, uploadToCloudinary],
   );
 
   const handleDrop = useCallback(
@@ -172,7 +172,7 @@ export function ImageUpload({
         handleFiles(e.dataTransfer.files);
       }
     },
-    [handleFiles]
+    [handleFiles],
   );
 
   const removeImage = (index: number) => {
@@ -218,7 +218,7 @@ export function ImageUpload({
           "grid grid-cols-4 sm:grid-cols-5 gap-3 p-3 rounded-xl border-2 border-dashed transition-colors",
           dragOver
             ? "border-emerald-400 bg-emerald-50"
-            : "border-gray-200 bg-gray-50"
+            : "border-gray-200 bg-gray-50",
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -244,7 +244,7 @@ export function ImageUpload({
             className={cn(
               "aspect-square rounded-lg overflow-hidden relative group cursor-grab active:cursor-grabbing",
               dragOverIndex === i && "ring-2 ring-emerald-500 ring-offset-2",
-              dragIndex === i && "opacity-50"
+              dragIndex === i && "opacity-50",
             )}
           >
             <img
