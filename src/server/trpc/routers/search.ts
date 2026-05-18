@@ -161,10 +161,11 @@ export const searchRouter = router({
         }
       }
 
-      // Count
+      // Count — must join users because geo conditions reference users.locationLat/Lng
       const [countResult] = await ctx.db
         .select({ count: sql<number>`count(*)::int` })
         .from(listings)
+        .innerJoin(users, eq(listings.sellerId, users.id))
         .where(and(...conditions));
 
       const totalHits = countResult?.count ?? 0;
