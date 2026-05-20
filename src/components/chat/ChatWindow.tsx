@@ -34,6 +34,11 @@ export function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Prevent browser auto-focus on mount — the keyboard covers the conversation
+  useEffect(() => {
+    inputRef.current?.blur();
+  }, [conversationId]);
+
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.messages.getMessages.useQuery(

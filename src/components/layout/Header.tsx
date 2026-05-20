@@ -36,6 +36,7 @@ import {
   Settings,
   Heart,
   MapPin,
+  Tag,
 } from "lucide-react";
 
 export function Header() {
@@ -155,6 +156,14 @@ export function Header() {
                         My Listings
                       </Link>
                       <Link
+                        href="/offers"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Tag className="w-4 h-4" />
+                        Offers
+                      </Link>
+                      <Link
                         href="/saved"
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         onClick={() => setMobileMenuOpen(false)}
@@ -257,6 +266,14 @@ export function Header() {
                 >
                   <ShoppingBag className="w-4 h-4" />
                   My Listings
+                </Link>
+                <Link
+                  href="/offers"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Tag className="w-4 h-4" />
+                  Offers
                 </Link>
                 <Link
                   href="/saved"

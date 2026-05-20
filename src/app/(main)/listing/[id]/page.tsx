@@ -13,12 +13,96 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  Tag,
+  Check,
+  X as XIcon,
+  DollarSign,
 } from "lucide-react";
 import { formatPrice, formatCondition, formatCategory, timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { OfferModal } from "@/components/listings/OfferModal";
+
+function OwnerOffers({ listingId, askingPrice }: { listingId: string; askingPrice: string }) {
+  const { data: offersList, isLoading } = trpc.offers.byListing.useQuery({ listingId });
+  const utils = trpc.useUtils();
+
+  const accept = trpc.offers.accept.useMutation({
+    onSuccess: () => utils.offers.byListing.invalidate({ listingId }),
+  });
+  const decline = trpc.offers.decline.useMutation({
+    onSuccess: () => utils.offers.byListing.invalidate({ listingId }),
+  });
+
+  if (isLoading) return null;
+  if (!offersList?.length) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Tag className="w-4 h-4 text-emerald-600" />
+        <h2 className="text-sm font-semibold text-gray-900">
+          Offers ({offersList.length})
+        </h2>
+        <Link href="/offers" className="ml-auto text-xs text-emerald-600 hover:text-emerald-700">
+          View all
+        </Link>
+      </div>
+      <div className="space-y-2">
+        {offersList.map((item) => (
+          <div key={item.offer.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+            {item.buyer.image ? (
+              <img src={item.buyer.image} alt="" className="w-8 h-8 rounded-full" />
+            ) : (
+              <div className="w-8 h-8 bg-gray-200 rounded-full" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900">
+                {item.buyer.name ?? "Anonymous"}{" "}
+                <span className="font-normal text-gray-500">offered</span>{" "}
+                {formatPrice(item.offer.amount)}
+              </p>
+              {item.offer.message && (
+                <p className="text-xs text-gray-500 truncate">{item.offer.message}</p>
+              )}
+            </div>
+            {item.offer.status === "pending" ? (
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  onClick={() => accept.mutate({ offerId: item.offer.id })}
+                  disabled={accept.isPending}
+                  className="p-1.5 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 disabled:opacity-50"
+                  title="Accept"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => decline.mutate({ offerId: item.offer.id })}
+                  disabled={decline.isPending}
+                  className="p-1.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 disabled:opacity-50"
+                  title="Decline"
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <span className={cn(
+                "text-xs font-medium px-2 py-0.5 rounded-full capitalize",
+                item.offer.status === "accepted" ? "bg-emerald-100 text-emerald-700" :
+                item.offer.status === "declined" ? "bg-red-100 text-red-600" :
+                item.offer.status === "countered" ? "bg-blue-100 text-blue-700" :
+                "bg-gray-100 text-gray-500"
+              )}>
+                {item.offer.status}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ListingDetailPage({
   params,
@@ -284,6 +368,9 @@ export default function ListingDetailPage({
               </p>
             </div>
           )}
+
+          {/* Owner: show offers on this listing */}
+          {isOwner && <OwnerOffers listingId={listing.id} askingPrice={listing.price} />}
 
           {/* Action buttons */}
           {!isOwner && (
