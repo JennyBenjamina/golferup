@@ -23,13 +23,19 @@ import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { OfferModal } from "@/components/listings/OfferModal";
+import { PaymentCountdown } from "@/components/listings/PaymentCountdown";
 
 function OwnerOffers({ listingId, askingPrice }: { listingId: string; askingPrice: string }) {
   const { data: offersList, isLoading } = trpc.offers.byListing.useQuery({ listingId });
   const utils = trpc.useUtils();
+  const [acceptTarget, setAcceptTarget] = useState<string | null>(null);
+  const [deadlineHours, setDeadlineHours] = useState(24);
 
   const accept = trpc.offers.accept.useMutation({
-    onSuccess: () => utils.offers.byListing.invalidate({ listingId }),
+    onSuccess: () => {
+      utils.offers.byListing.invalidate({ listingId });
+      setAcceptTarget(null);
+    },
   });
   const decline = trpc.offers.decline.useMutation({
     onSuccess: () => utils.offers.byListing.invalidate({ listingId }),
@@ -51,51 +57,110 @@ function OwnerOffers({ listingId, askingPrice }: { listingId: string; askingPric
       </div>
       <div className="space-y-2">
         {offersList.map((item) => (
-          <div key={item.offer.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            {item.buyer.image ? (
-              <img src={item.buyer.image} alt="" className="w-8 h-8 rounded-full" />
-            ) : (
-              <div className="w-8 h-8 bg-gray-200 rounded-full" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">
-                {item.buyer.name ?? "Anonymous"}{" "}
-                <span className="font-normal text-gray-500">offered</span>{" "}
-                {formatPrice(item.offer.amount)}
-              </p>
-              {item.offer.message && (
-                <p className="text-xs text-gray-500 truncate">{item.offer.message}</p>
+          <div key={item.offer.id} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-3">
+              {item.buyer.image ? (
+                <img src={item.buyer.image} alt="" className="w-8 h-8 rounded-full" />
+              ) : (
+                <div className="w-8 h-8 bg-gray-200 rounded-full" />
               )}
-            </div>
-            {item.offer.status === "pending" ? (
-              <div className="flex gap-1.5 shrink-0">
-                <button
-                  onClick={() => accept.mutate({ offerId: item.offer.id })}
-                  disabled={accept.isPending}
-                  className="p-1.5 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 disabled:opacity-50"
-                  title="Accept"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => decline.mutate({ offerId: item.offer.id })}
-                  disabled={decline.isPending}
-                  className="p-1.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 disabled:opacity-50"
-                  title="Decline"
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">
+                  {item.buyer.name ?? "Anonymous"}{" "}
+                  <span className="font-normal text-gray-500">offered</span>{" "}
+                  {formatPrice(item.offer.amount)}
+                </p>
+                {item.offer.message && (
+                  <p className="text-xs text-gray-500 truncate">{item.offer.message}</p>
+                )}
               </div>
-            ) : (
-              <span className={cn(
-                "text-xs font-medium px-2 py-0.5 rounded-full capitalize",
-                item.offer.status === "accepted" ? "bg-emerald-100 text-emerald-700" :
-                item.offer.status === "declined" ? "bg-red-100 text-red-600" :
-                item.offer.status === "countered" ? "bg-blue-100 text-blue-700" :
-                "bg-gray-100 text-gray-500"
-              )}>
-                {item.offer.status}
-              </span>
+              {item.offer.status === "pending" && acceptTarget !== item.offer.id ? (
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => {
+                      setAcceptTarget(item.offer.id);
+                      setDeadlineHours(24);
+                    }}
+                    className="p-1.5 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200"
+                    title="Accept"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => decline.mutate({ offerId: item.offer.id })}
+                    disabled={decline.isPending}
+                    className="p-1.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 disabled:opacity-50"
+                    title="Decline"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : item.offer.status === "accepted" ? (
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.offer.paymentDeadline && (
+                    <PaymentCountdown
+                      deadline={item.offer.paymentDeadline}
+                      compact
+                      onExpired={() => utils.offers.byListing.invalidate({ listingId })}
+                    />
+                  )}
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                    accepted
+                  </span>
+                </div>
+              ) : item.offer.status !== "pending" ? (
+                <span className={cn(
+                  "text-xs font-medium px-2 py-0.5 rounded-full capitalize shrink-0",
+                  item.offer.status === "declined" ? "bg-red-100 text-red-600" :
+                  item.offer.status === "countered" ? "bg-blue-100 text-blue-700" :
+                  "bg-gray-100 text-gray-500"
+                )}>
+                  {item.offer.status}
+                </span>
+              ) : null}
+            </div>
+            {/* Inline deadline picker when accepting */}
+            {acceptTarget === item.offer.id && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs font-medium text-gray-700 mb-2">
+                  Payment deadline for buyer:
+                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  {[12, 24, 48, 72].map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setDeadlineHours(h)}
+                      className={cn(
+                        "px-2 py-1 text-xs rounded-full border transition-colors",
+                        deadlineHours === h
+                          ? "bg-emerald-600 text-white border-emerald-600"
+                          : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                      )}
+                    >
+                      {h}h
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      accept.mutate({ offerId: item.offer.id, deadlineHours })
+                    }
+                    disabled={accept.isPending}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => setAcceptTarget(null)}
+                    className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ))}
@@ -115,6 +180,15 @@ export default function ListingDetailPage({
   const { data, isLoading } = trpc.listings.getById.useQuery({ id });
   const [currentImage, setCurrentImage] = useState(0);
   const [showOfferModal, setShowOfferModal] = useState(false);
+
+  // Check if buyer has an accepted offer on this listing
+  const { data: myOfferData } = trpc.offers.byListing.useQuery(
+    { listingId: id },
+    { enabled: !!session }
+  );
+  const acceptedOffer = myOfferData?.find(
+    (o) => o.offer.status === "accepted" && o.offer.buyerId === session?.user?.id
+  );
 
   const createCheckout = trpc.payments.createCheckout.useMutation({
     onSuccess: (result) => {
@@ -375,19 +449,55 @@ export default function ListingDetailPage({
           {/* Action buttons */}
           {!isOwner && (
             <div className="space-y-3 mb-8">
-              <button
-                onClick={() => createCheckout.mutate({ listingId: listing.id })}
-                disabled={createCheckout.isPending}
-                className="w-full py-3 bg-emerald-600 text-white font-medium rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-50"
-              >
-                {createCheckout.isPending ? "Processing..." : `Buy Now — ${formatPrice(listing.price)}`}
-              </button>
-              <button
-                onClick={() => setShowOfferModal(true)}
-                className="w-full py-3 border border-emerald-600 text-emerald-600 font-medium rounded-full hover:bg-emerald-50 transition-colors"
-              >
-                Make an Offer
-              </button>
+              {acceptedOffer?.offer.paymentDeadline ? (
+                <>
+                  {/* Buyer has an accepted offer — show countdown + pay */}
+                  <PaymentCountdown
+                    deadline={acceptedOffer.offer.paymentDeadline}
+                    onExpired={() => utils.offers.byListing.invalidate({ listingId: id })}
+                  />
+                  <button
+                    onClick={() =>
+                      createCheckout.mutate({
+                        listingId: listing.id,
+                        offerId: acceptedOffer.offer.id,
+                      })
+                    }
+                    disabled={createCheckout.isPending}
+                    className="w-full py-3 bg-emerald-600 text-white font-medium rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {createCheckout.isPending
+                      ? "Processing..."
+                      : `Pay Now — ${formatPrice(acceptedOffer.offer.amount)}`}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() =>
+                      createCheckout.mutate({ listingId: listing.id })
+                    }
+                    disabled={
+                      createCheckout.isPending || listing.status === "reserved"
+                    }
+                    className="w-full py-3 bg-emerald-600 text-white font-medium rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {listing.status === "reserved"
+                      ? "Reserved"
+                      : createCheckout.isPending
+                      ? "Processing..."
+                      : `Buy Now — ${formatPrice(listing.price)}`}
+                  </button>
+                  {listing.status !== "reserved" && (
+                    <button
+                      onClick={() => setShowOfferModal(true)}
+                      className="w-full py-3 border border-emerald-600 text-emerald-600 font-medium rounded-full hover:bg-emerald-50 transition-colors"
+                    >
+                      Make an Offer
+                    </button>
+                  )}
+                </>
+              )}
               <button
                 onClick={() => {
                   startConversation.mutate({

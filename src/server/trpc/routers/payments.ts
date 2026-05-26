@@ -139,7 +139,8 @@ export const paymentsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "You can't buy your own listing." });
       }
 
-      if (result.listing.status !== "active") {
+      // Allow purchase if listing is active, or reserved (from an accepted offer)
+      if (result.listing.status !== "active" && result.listing.status !== "reserved") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "This listing is no longer available." });
       }
 

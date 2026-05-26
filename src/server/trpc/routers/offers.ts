@@ -1,8 +1,43 @@
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { offers, listings, users } from "@/server/db/schema";
+
+/**
+ * Expire any accepted offers whose payment deadline has passed.
+ * Marks them as "expired" and relists the associated listings.
+ */
+export async function expireOverdueOffers(db: any) {
+  const now = new Date();
+
+  // Find all accepted offers past their payment deadline
+  const expired = await db
+    .select({ id: offers.id, listingId: offers.listingId })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.status, "accepted"),
+        lt(offers.paymentDeadline, now)
+      )
+    );
+
+  for (const row of expired) {
+    // Mark offer as expired
+    await db
+      .update(offers)
+      .set({ status: "expired" })
+      .where(eq(offers.id, row.id));
+
+    // Relist the item
+    await db
+      .update(listings)
+      .set({ status: "active" })
+      .where(eq(listings.id, row.listingId));
+  }
+
+  return expired.length;
+}
 
 export const offersRouter = router({
   // Submit an offer on a listing
@@ -47,7 +82,12 @@ export const offersRouter = router({
 
   // Accept an offer (seller only)
   accept: protectedProcedure
-    .input(z.object({ offerId: z.string().uuid() }))
+    .input(
+      z.object({
+        offerId: z.string().uuid(),
+        deadlineHours: z.number().min(1).max(168).default(24), // 1h to 7 days, default 24h
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const [offer] = await ctx.db
         .select({
@@ -67,12 +107,23 @@ export const offersRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "This offer is no longer pending." });
       }
 
-      // Accept this offer
+      // Set payment deadline
+      const paymentDeadline = new Date(
+        Date.now() + input.deadlineHours * 60 * 60 * 1000
+      );
+
+      // Accept this offer with a payment deadline
       const [updated] = await ctx.db
         .update(offers)
-        .set({ status: "accepted" })
+        .set({ status: "accepted", paymentDeadline })
         .where(eq(offers.id, input.offerId))
         .returning();
+
+      // Reserve the listing so no one else can buy it
+      await ctx.db
+        .update(listings)
+        .set({ status: "reserved" })
+        .where(eq(listings.id, offer.offer.listingId));
 
       // Decline all other pending offers on this listing
       await ctx.db
@@ -165,6 +216,9 @@ export const offersRouter = router({
   byListing: protectedProcedure
     .input(z.object({ listingId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      // Inline expiration sweep for this listing
+      await expireOverdueOffers(ctx.db);
+
       // Check if user is the seller
       const [listing] = await ctx.db
         .select({ sellerId: listings.sellerId })
@@ -197,6 +251,9 @@ export const offersRouter = router({
 
   // Get all offers the current user has made
   myOffers: protectedProcedure.query(async ({ ctx }) => {
+    // Inline expiration sweep
+    await expireOverdueOffers(ctx.db);
+
     return ctx.db
       .select({
         offer: offers,
@@ -216,6 +273,9 @@ export const offersRouter = router({
 
   // Get all offers received on the current user's listings
   receivedOffers: protectedProcedure.query(async ({ ctx }) => {
+    // Inline expiration sweep
+    await expireOverdueOffers(ctx.db);
+
     return ctx.db
       .select({
         offer: offers,

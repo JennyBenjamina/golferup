@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -11,9 +12,11 @@ import {
   X,
   ArrowRight,
   Tag,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PaymentCountdown } from "@/components/listings/PaymentCountdown";
 
 type Tab = "received" | "sent";
 
@@ -120,11 +123,14 @@ function CounterModal({
 
 export default function OffersPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("received");
   const [counterTarget, setCounterTarget] = useState<{
     offerId: string;
     amount: string;
   } | null>(null);
+  const [acceptDeadlineTarget, setAcceptDeadlineTarget] = useState<string | null>(null);
+  const [deadlineHours, setDeadlineHours] = useState(24);
 
   const {
     data: received,
@@ -143,10 +149,21 @@ export default function OffersPage() {
   const utils = trpc.useUtils();
 
   const accept = trpc.offers.accept.useMutation({
-    onSuccess: () => utils.offers.receivedOffers.invalidate(),
+    onSuccess: () => {
+      utils.offers.receivedOffers.invalidate();
+      setAcceptDeadlineTarget(null);
+    },
   });
   const decline = trpc.offers.decline.useMutation({
     onSuccess: () => utils.offers.receivedOffers.invalidate(),
+  });
+
+  const createCheckout = trpc.payments.createCheckout.useMutation({
+    onSuccess: (result) => {
+      if (result.transactionId) {
+        router.push(`/checkout/${result.transactionId}`);
+      }
+    },
   });
 
   const isLoading = tab === "received" ? receivedLoading : sentLoading;
@@ -264,35 +281,102 @@ export default function OffersPage() {
 
                     {/* Actions — only for pending offers */}
                     {item.offer.status === "pending" && (
-                      <div className="flex items-center gap-2 mt-3">
-                        <button
-                          onClick={() => accept.mutate({ offerId: item.offer.id })}
-                          disabled={accept.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          Accept
-                        </button>
-                        <button
-                          onClick={() =>
-                            setCounterTarget({
-                              offerId: item.offer.id,
-                              amount: item.offer.amount,
-                            })
-                          }
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-50"
-                        >
-                          <DollarSign className="w-3.5 h-3.5" />
-                          Counter
-                        </button>
-                        <button
-                          onClick={() => decline.mutate({ offerId: item.offer.id })}
-                          disabled={decline.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-full hover:bg-red-50 disabled:opacity-50"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          Decline
-                        </button>
+                      acceptDeadlineTarget === item.offer.id ? (
+                        <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <p className="text-xs font-medium text-emerald-800 mb-2">
+                            How long should the buyer have to pay?
+                          </p>
+                          <div className="flex items-center gap-2 mb-2">
+                            {[12, 24, 48, 72].map((h) => (
+                              <button
+                                key={h}
+                                type="button"
+                                onClick={() => setDeadlineHours(h)}
+                                className={cn(
+                                  "px-2.5 py-1 text-xs rounded-full border transition-colors",
+                                  deadlineHours === h
+                                    ? "bg-emerald-600 text-white border-emerald-600"
+                                    : "border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                                )}
+                              >
+                                {h}h
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                accept.mutate({
+                                  offerId: item.offer.id,
+                                  deadlineHours,
+                                })
+                              }
+                              disabled={accept.isPending}
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              {accept.isPending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                              Accept with {deadlineHours}h deadline
+                            </button>
+                            <button
+                              onClick={() => setAcceptDeadlineTarget(null)}
+                              className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            onClick={() => {
+                              setAcceptDeadlineTarget(item.offer.id);
+                              setDeadlineHours(24);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            Accept
+                          </button>
+                          <button
+                            onClick={() =>
+                              setCounterTarget({
+                                offerId: item.offer.id,
+                                amount: item.offer.amount,
+                              })
+                            }
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-50"
+                          >
+                            <DollarSign className="w-3.5 h-3.5" />
+                            Counter
+                          </button>
+                          <button
+                            onClick={() => decline.mutate({ offerId: item.offer.id })}
+                            disabled={decline.isPending}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-full hover:bg-red-50 disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Decline
+                          </button>
+                        </div>
+                      )
+                    )}
+
+                    {/* Accepted offer — show payment countdown for seller */}
+                    {item.offer.status === "accepted" && item.offer.paymentDeadline && (
+                      <div className="mt-3">
+                        <div className="flex items-center gap-2 text-xs text-amber-600">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Waiting for buyer payment</span>
+                          <PaymentCountdown
+                            deadline={item.offer.paymentDeadline}
+                            compact
+                            onExpired={() => utils.offers.receivedOffers.invalidate()}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -360,6 +444,37 @@ export default function OffersPage() {
                       <p className="text-sm text-gray-500 mt-1 italic">
                         &ldquo;{item.offer.message}&rdquo;
                       </p>
+                    )}
+
+                    {/* Accepted offer — show countdown + Pay Now */}
+                    {item.offer.status === "accepted" && item.offer.paymentDeadline && (
+                      <div className="mt-3 space-y-2">
+                        <PaymentCountdown
+                          deadline={item.offer.paymentDeadline}
+                          onExpired={() => utils.offers.myOffers.invalidate()}
+                        />
+                        <button
+                          onClick={() =>
+                            createCheckout.mutate({
+                              listingId: item.listing.id,
+                              offerId: item.offer.id,
+                            })
+                          }
+                          disabled={createCheckout.isPending}
+                          className="w-full py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {createCheckout.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            `Pay Now — ${formatPrice(item.offer.amount)}`
+                          )}
+                        </button>
+                        {createCheckout.error && (
+                          <p className="text-sm text-red-600">
+                            {createCheckout.error.message}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

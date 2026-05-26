@@ -216,6 +216,7 @@ export const offers = pgTable(
     amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
     message: text("message"),
     status: offerStatusEnum("status").default("pending").notNull(),
+    paymentDeadline: timestamp("payment_deadline"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
