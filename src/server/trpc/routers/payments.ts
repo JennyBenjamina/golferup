@@ -11,6 +11,7 @@ import {
   createPaymentIntent,
   capturePayment,
   cancelPayment,
+  retrievePaymentIntent,
   PLATFORM_FEE_PERCENT,
 } from "@/server/services/stripe";
 
@@ -205,6 +206,52 @@ export const paymentsRouter = router({
         transactionId: transaction?.id,
         amount,
         platformFee,
+      };
+    }),
+
+  // Get checkout details (clientSecret + transaction info) for the frontend
+  getCheckoutDetails: protectedProcedure
+    .input(z.object({ transactionId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [result] = await ctx.db
+        .select({
+          transaction: transactions,
+          listing: {
+            id: listings.id,
+            title: listings.title,
+            price: listings.price,
+            images: listings.images,
+          },
+        })
+        .from(transactions)
+        .innerJoin(listings, eq(transactions.listingId, listings.id))
+        .where(eq(transactions.id, input.transactionId))
+        .limit(1);
+
+      if (!result) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Transaction not found." });
+      }
+      if (result.transaction.buyerId !== ctx.userId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This is not your transaction." });
+      }
+      if (result.transaction.status !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This transaction is no longer pending." });
+      }
+
+      // Retrieve the payment intent to get the client_secret
+      if (!result.transaction.stripePaymentIntentId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No payment intent found." });
+      }
+
+      const paymentIntent = await retrievePaymentIntent(
+        result.transaction.stripePaymentIntentId
+      );
+
+      return {
+        clientSecret: paymentIntent.client_secret as string,
+        amount: result.transaction.amount,
+        platformFee: result.transaction.platformFee,
+        listing: result.listing,
       };
     }),
 

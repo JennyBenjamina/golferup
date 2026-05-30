@@ -168,4 +168,12 @@ export async function constructWebhookEvent(
   );
 }
 
+/**
+ * Retrieve a Payment Intent (to get client_secret for the frontend)
+ */
+export async function retrievePaymentIntent(paymentIntentId: string) {
+  const stripe = await getStripe();
+  return stripe.paymentIntents.retrieve(paymentIntentId);
+}
+
 export { PLATFORM_FEE_PERCENT };

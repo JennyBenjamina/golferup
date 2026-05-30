@@ -5,7 +5,16 @@ import { trpc } from "@/lib/trpc";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Check, MapPin, Navigation } from "lucide-react";
+import {
+  Loader2,
+  Check,
+  MapPin,
+  Navigation,
+  CreditCard,
+  ExternalLink,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { useState } from "react";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 
@@ -17,6 +26,100 @@ const profileSchema = z.object({
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
+
+function SellerPaymentsCard() {
+  const { data: status, isLoading } = trpc.payments.sellerStatus.useQuery();
+  const onboard = trpc.payments.onboardSeller.useMutation({
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+  const dashboard = trpc.payments.dashboardLink.useMutation({
+    onSuccess: (data) => {
+      window.open(data.url, "_blank");
+    },
+  });
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+      <div className="flex items-center gap-2 mb-4">
+        <CreditCard className="w-5 h-5 text-emerald-600" />
+        <h2 className="text-lg font-semibold text-gray-900">Seller Payments</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        Connect your bank account through Stripe to receive payments when you sell items. GolferUp takes a 10% platform fee on each sale.
+      </p>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Checking status...
+        </div>
+      ) : status?.status === "active" ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-emerald-800">
+                Payments connected
+              </p>
+              <p className="text-xs text-emerald-600 mt-0.5">
+                You can receive payments from buyers.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => dashboard.mutate()}
+            disabled={dashboard.isPending}
+            className="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+          >
+            {dashboard.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ExternalLink className="w-4 h-4" />
+            )}
+            View Stripe Dashboard
+          </button>
+        </div>
+      ) : status?.status === "pending" ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Setup incomplete
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Finish connecting your Stripe account to start receiving payments.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onboard.mutate()}
+            disabled={onboard.isPending}
+            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {onboard.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Continue Setup
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => onboard.mutate()}
+          disabled={onboard.isPending}
+          className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+        >
+          {onboard.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+          Connect Stripe Account
+        </button>
+      )}
+
+      {onboard.error && (
+        <p className="text-sm text-red-600 mt-2">{onboard.error.message}</p>
+      )}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -193,6 +296,9 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+
+      {/* Seller Payments */}
+      <SellerPaymentsCard />
 
       {/* Email info */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
