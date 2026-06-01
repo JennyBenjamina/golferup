@@ -115,7 +115,23 @@ function SellerPaymentsCard() {
       )}
 
       {onboard.error && (
-        <p className="text-sm text-red-600 mt-2">{onboard.error.message}</p>
+        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm font-medium text-amber-800">
+            Stripe Connect isn&apos;t enabled yet
+          </p>
+          <p className="text-sm text-amber-600 mt-1">
+            The platform owner needs to enable Stripe Connect first.{" "}
+            <a
+              href="https://dashboard.stripe.com/connect/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium hover:text-amber-800"
+            >
+              Enable it here
+            </a>
+            , then try again.
+          </p>
+        </div>
       )}
     </div>
   );
