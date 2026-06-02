@@ -12,6 +12,7 @@ import {
   capturePayment,
   cancelPayment,
   retrievePaymentIntent,
+  createAccountSession,
   PLATFORM_FEE_PERCENT,
 } from "@/server/services/stripe";
 
@@ -58,6 +59,40 @@ export const paymentsRouter = router({
     });
 
     return { url: link.url };
+  }),
+
+  // Create an Account Session for embedded onboarding components
+  createAccountSession: protectedProcedure.mutation(async ({ ctx }) => {
+    const [user] = await ctx.db
+      .select()
+      .from(users)
+      .where(eq(users.id, ctx.userId))
+      .limit(1);
+
+    if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+
+    let stripeAccountId: string = user.stripeAccountId ?? "";
+
+    // Create Connect account if they don't have one
+    if (!stripeAccountId) {
+      const account = await createConnectAccount({
+        email: user.email,
+        userId: user.id,
+      });
+      stripeAccountId = account.id;
+
+      await ctx.db
+        .update(users)
+        .set({ stripeAccountId })
+        .where(eq(users.id, ctx.userId));
+    }
+
+    // Create an account session for the embedded component
+    const accountSession = await createAccountSession(stripeAccountId);
+
+    return {
+      clientSecret: accountSession.client_secret,
+    };
   }),
 
   // Check current seller onboarding status

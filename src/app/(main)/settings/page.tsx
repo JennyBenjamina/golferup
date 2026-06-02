@@ -15,9 +15,14 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
+import {
+  ConnectComponentsProvider,
+  ConnectAccountOnboarding,
+} from "@stripe/react-connect-js";
+import { loadConnectAndInitialize } from "@stripe/connect-js";
 
 const profileSchema = z.object({
   name: z.string().min(1).max(255),
@@ -30,16 +35,42 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 function SellerPaymentsCard() {
   const { data: status, isLoading } = trpc.payments.sellerStatus.useQuery();
-  const onboard = trpc.payments.onboardSeller.useMutation({
-    onSuccess: (data) => {
-      window.location.href = data.url;
-    },
-  });
+  const utils = trpc.useUtils();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [stripeInstance, setStripeInstance] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const createSession = trpc.payments.createAccountSession.useMutation();
+
   const dashboard = trpc.payments.dashboardLink.useMutation({
     onSuccess: (data) => {
       window.open(data.url, "_blank");
     },
   });
+
+  const handleStartOnboarding = useCallback(async () => {
+    setError(null);
+    try {
+      const instance = loadConnectAndInitialize({
+        publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+        fetchClientSecret: async () => {
+          const result = await createSession.mutateAsync();
+          return result.clientSecret;
+        },
+        appearance: {
+          overlays: "dialog",
+          variables: {
+            colorPrimary: "#059669",
+            borderRadius: "8px",
+          },
+        },
+      });
+      setStripeInstance(instance);
+      setShowOnboarding(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to start onboarding");
+    }
+  }, [createSession]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
@@ -82,56 +113,30 @@ function SellerPaymentsCard() {
             View Stripe Dashboard
           </button>
         </div>
-      ) : status?.status === "pending" ? (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-amber-800">
-                Setup incomplete
-              </p>
-              <p className="text-xs text-amber-600 mt-0.5">
-                Finish connecting your Stripe account to start receiving payments.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => onboard.mutate()}
-            disabled={onboard.isPending}
-            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
-          >
-            {onboard.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-            Continue Setup
-          </button>
-        </div>
+      ) : showOnboarding && stripeInstance ? (
+        <ConnectComponentsProvider connectInstance={stripeInstance}>
+          <ConnectAccountOnboarding
+            onExit={() => {
+              setShowOnboarding(false);
+              setStripeInstance(null);
+              utils.payments.sellerStatus.invalidate();
+            }}
+          />
+        </ConnectComponentsProvider>
       ) : (
         <button
-          onClick={() => onboard.mutate()}
-          disabled={onboard.isPending}
+          onClick={handleStartOnboarding}
+          disabled={createSession.isPending}
           className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
         >
-          {onboard.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-          Connect Stripe Account
+          {createSession.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+          {status?.status === "pending" ? "Continue Setup" : "Connect Stripe Account"}
         </button>
       )}
 
-      {onboard.error && (
-        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm font-medium text-amber-800">
-            Stripe Connect isn&apos;t enabled yet
-          </p>
-          <p className="text-sm text-amber-600 mt-1">
-            The platform owner needs to enable Stripe Connect first.{" "}
-            <a
-              href="https://dashboard.stripe.com/connect/overview"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-medium hover:text-amber-800"
-            >
-              Enable it here
-            </a>
-            , then try again.
-          </p>
+      {error && (
+        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
     </div>

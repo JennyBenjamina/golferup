@@ -169,6 +169,20 @@ export async function constructWebhookEvent(
 }
 
 /**
+ * Create an Account Session for embedded Connect components
+ */
+export async function createAccountSession(stripeAccountId: string) {
+  const stripe = await getStripe();
+  const accountSession = await stripe.accountSessions.create({
+    account: stripeAccountId,
+    components: {
+      account_onboarding: { enabled: true },
+    },
+  });
+  return accountSession;
+}
+
+/**
  * Retrieve a Payment Intent (to get client_secret for the frontend)
  */
 export async function retrievePaymentIntent(paymentIntentId: string) {
