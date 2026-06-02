@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 
 const profileSchema = z.object({
@@ -139,6 +140,8 @@ function SellerPaymentsCard() {
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const stripeReturn = searchParams.get("stripe");
   const { data: me } = trpc.users.me.useQuery();
   const utils = trpc.useUtils();
   const [saved, setSaved] = useState(false);
@@ -197,6 +200,23 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
+
+      {stripeReturn === "complete" && (
+        <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-6">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <p className="text-sm font-medium text-emerald-800">
+            Stripe setup complete! You can now receive payments from buyers.
+          </p>
+        </div>
+      )}
+      {stripeReturn === "refresh" && (
+        <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6">
+          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+          <p className="text-sm font-medium text-amber-800">
+            Your Stripe onboarding session expired. Click &ldquo;Continue Setup&rdquo; below to try again.
+          </p>
+        </div>
+      )}
 
       {/* Location card — prominent at the top */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
