@@ -15,14 +15,19 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
-import {
-  ConnectComponentsProvider,
-  ConnectAccountOnboarding,
-} from "@stripe/react-connect-js";
-import { loadConnectAndInitialize } from "@stripe/connect-js";
+import dynamic from "next/dynamic";
+
+const ConnectComponentsProvider = dynamic(
+  () => import("@stripe/react-connect-js").then((m) => m.ConnectComponentsProvider),
+  { ssr: false }
+);
+const ConnectAccountOnboarding = dynamic(
+  () => import("@stripe/react-connect-js").then((m) => m.ConnectAccountOnboarding),
+  { ssr: false }
+);
 
 const profileSchema = z.object({
   name: z.string().min(1).max(255),
@@ -51,6 +56,7 @@ function SellerPaymentsCard() {
   const handleStartOnboarding = useCallback(async () => {
     setError(null);
     try {
+      const { loadConnectAndInitialize } = await import("@stripe/connect-js");
       const instance = loadConnectAndInitialize({
         publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
         fetchClientSecret: async () => {
@@ -143,7 +149,7 @@ function SellerPaymentsCard() {
   );
 }
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const stripeReturn = searchParams.get("stripe");
@@ -378,5 +384,13 @@ export default function SettingsPage() {
         initialRadius={25}
       />
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 sm:px-6 py-8"><Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" /></div>}>
+      <SettingsPageInner />
+    </Suspense>
   );
 }
