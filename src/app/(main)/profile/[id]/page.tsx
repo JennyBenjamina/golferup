@@ -1,9 +1,11 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
+import { useSession } from "next-auth/react";
 import { trpc } from "@/lib/trpc";
-import { Star, MapPin, Calendar } from "lucide-react";
+import { Star, MapPin, Calendar, Trash2, Pencil, Loader2 } from "lucide-react";
 import { ListingCard } from "@/components/listings/ListingCard";
+import Link from "next/link";
 
 export default function ProfilePage({
   params,
@@ -11,10 +13,24 @@ export default function ProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { data: session } = useSession();
+  const isOwn = session?.user?.id === id;
+  const utils = trpc.useUtils();
   const { data: user, isLoading: userLoading } =
     trpc.users.getProfile.useQuery({ id });
   const { data: userListings, isLoading: listingsLoading } =
-    trpc.listings.byUser.useQuery({ userId: id });
+    isOwn
+      ? trpc.listings.myListings.useQuery()
+      : trpc.listings.byUser.useQuery({ userId: id });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteListing = trpc.listings.delete.useMutation({
+    onSuccess: () => {
+      setDeletingId(null);
+      utils.listings.myListings.invalidate();
+      utils.listings.byUser.invalidate({ userId: id });
+    },
+  });
 
   if (userLoading) {
     return (
@@ -102,7 +118,52 @@ export default function ProfilePage({
         ) : userListings && userListings.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {userListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+              <div key={listing.id} className="relative group">
+                <ListingCard listing={listing} />
+                {isOwn && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Link
+                      href={`/sell?edit=${listing.id}`}
+                      className="p-1.5 bg-white/90 backdrop-blur rounded-lg shadow-sm hover:bg-white border border-gray-200"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-gray-600" />
+                    </Link>
+                    {deletingId === listing.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => deleteListing.mutate({ id: listing.id })}
+                          disabled={deleteListing.isPending}
+                          className="px-2 py-1 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleteListing.isPending ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            "Delete"
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="px-2 py-1 bg-white text-gray-600 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeletingId(listing.id)}
+                        className="p-1.5 bg-white/90 backdrop-blur rounded-lg shadow-sm hover:bg-red-50 border border-gray-200"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                {isOwn && listing.status !== "active" && (
+                  <span className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-900/70 text-white">
+                    {listing.status}
+                  </span>
+                )}
+              </div>
             ))}
           </div>
         ) : (
