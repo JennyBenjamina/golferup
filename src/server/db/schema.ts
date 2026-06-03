@@ -22,6 +22,7 @@ export const listingStatusEnum = pgEnum("listing_status", [
   "reserved",
   "expired",
   "draft",
+  "deleted",
 ]);
 
 export const listingConditionEnum = pgEnum("listing_condition", [

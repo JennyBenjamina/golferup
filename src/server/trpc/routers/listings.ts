@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, ne, desc, and, sql } from "drizzle-orm";
 import { router, publicProcedure, protectedProcedure } from "../init";
 import { listings, users } from "@/server/db/schema";
 
@@ -189,12 +189,13 @@ export const listingsRouter = router({
       return listing;
     }),
 
-  // Delete a listing (only by the seller)
+  // Soft-delete a listing (only by the seller)
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db
-        .delete(listings)
+        .update(listings)
+        .set({ status: "deleted" })
         .where(and(eq(listings.id, input.id), eq(listings.sellerId, ctx.userId)));
 
       return { success: true };
@@ -216,12 +217,17 @@ export const listingsRouter = router({
         .orderBy(desc(listings.createdAt));
     }),
 
-  // Get current user's listings (all statuses)
+  // Get current user's listings (all statuses except deleted)
   myListings: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db
       .select()
       .from(listings)
-      .where(eq(listings.sellerId, ctx.userId))
+      .where(
+        and(
+          eq(listings.sellerId, ctx.userId),
+          ne(listings.status, "deleted")
+        )
+      )
       .orderBy(desc(listings.createdAt));
   }),
 });
