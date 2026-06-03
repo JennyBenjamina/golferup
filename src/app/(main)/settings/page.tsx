@@ -55,6 +55,9 @@ function SellerPaymentsCard() {
 
   const handleStartOnboarding = useCallback(async () => {
     setError(null);
+    // Always destroy the old instance so we get a fresh ephemeral key
+    setStripeInstance(null);
+    setShowOnboarding(false);
     try {
       const { loadConnectAndInitialize } = await import("@stripe/connect-js");
       const instance = loadConnectAndInitialize({

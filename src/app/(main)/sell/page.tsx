@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import { Loader2, MapPin, AlertCircle } from "lucide-react";
 import { ImageUpload } from "@/components/listings/ImageUpload";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 import Link from "next/link";
+import { Suspense } from "react";
 
 const listingSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(255),
@@ -80,8 +81,10 @@ const categories = [
   { value: "other", label: "Other" },
 ];
 
-export default function SellPage() {
+function SellPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
   const [images, setImages] = useState<string[]>([]);
   const [locationOverride, setLocationOverride] = useState<{
     city?: string;
@@ -90,15 +93,23 @@ export default function SellPage() {
     lng?: number;
   } | null>(null);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Fetch seller profile for location pre-fill
   const { data: me } = trpc.users.me.useQuery();
   const sellerHasLocation = !!(me?.locationLat && me?.locationLng);
 
+  // Fetch existing listing when editing
+  const { data: existingListing } = trpc.listings.getById.useQuery(
+    { id: editId! },
+    { enabled: !!editId }
+  );
+
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
@@ -108,6 +119,44 @@ export default function SellPage() {
       hand: "right",
     },
   });
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (existingListing && !initialized) {
+      const listing = "listing" in existingListing ? (existingListing as any).listing : existingListing;
+      reset({
+        title: listing.title ?? "",
+        description: listing.description ?? "",
+        price: listing.price ?? "",
+        condition: listing.condition ?? "good",
+        category: listing.category ?? "drivers",
+        brand: listing.brand ?? "",
+        model: listing.model ?? "",
+        flex: listing.flex ?? "",
+        loft: listing.loft ?? "",
+        shaft: listing.shaft ?? "",
+        hand: listing.hand ?? "right",
+        size: listing.size ?? "",
+        gender: listing.gender ?? "",
+        color: listing.color ?? "",
+        wheelCount: listing.wheelCount ?? "",
+        locationCity: listing.locationCity ?? "",
+        locationState: listing.locationState ?? "",
+      });
+      if (listing.images?.length) {
+        setImages(listing.images);
+      }
+      if (listing.locationLat && listing.locationLng) {
+        setLocationOverride({
+          city: listing.locationCity ?? undefined,
+          state: listing.locationState ?? undefined,
+          lat: listing.locationLat,
+          lng: listing.locationLng,
+        });
+      }
+      setInitialized(true);
+    }
+  }, [existingListing, initialized, reset]);
 
   const selectedCategory = watch("category");
   const isClub = CLUB_CATEGORIES.includes(selectedCategory);
@@ -119,6 +168,12 @@ export default function SellPage() {
   const createListing = trpc.listings.create.useMutation({
     onSuccess: (listing) => {
       router.push(`/listing/${listing?.id}`);
+    },
+  });
+
+  const updateListing = trpc.listings.update.useMutation({
+    onSuccess: () => {
+      router.push(`/listing/${editId}`);
     },
   });
 
@@ -161,20 +216,34 @@ export default function SellPage() {
     }
     // If no location provided at all, the backend will inherit from seller profile
 
-    createListing.mutate({
-      ...data,
-      images,
-      locationCity,
-      locationState,
-      locationLat,
-      locationLng,
-    });
+    if (editId) {
+      updateListing.mutate({
+        id: editId,
+        data: {
+          ...data,
+          images,
+          locationCity,
+          locationState,
+          locationLat,
+          locationLng,
+        },
+      });
+    } else {
+      createListing.mutate({
+        ...data,
+        images,
+        locationCity,
+        locationState,
+        locationLat,
+        locationLng,
+      });
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        List Your Golf Gear
+        {editId ? "Edit Listing" : "List Your Golf Gear"}
       </h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -589,19 +658,27 @@ export default function SellPage() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={createListing.isPending}
+          disabled={createListing.isPending || updateListing.isPending}
           className="w-full py-3 bg-emerald-600 text-white font-medium rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {createListing.isPending ? (
+          {(createListing.isPending || updateListing.isPending) ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Posting...
+              {editId ? "Saving..." : "Posting..."}
             </>
           ) : (
-            "Post Listing"
+            editId ? "Save Changes" : "Post Listing"
           )}
         </button>
       </form>
     </div>
+  );
+}
+
+export default function SellPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-8"><Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" /></div>}>
+      <SellPageInner />
+    </Suspense>
   );
 }
