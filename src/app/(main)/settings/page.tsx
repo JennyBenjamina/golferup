@@ -43,6 +43,7 @@ function SellerPaymentsCard() {
   const utils = trpc.useUtils();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [stripeInstance, setStripeInstance] = useState<any>(null);
+  const [onboardingKey, setOnboardingKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const createSession = trpc.payments.createAccountSession.useMutation();
@@ -55,17 +56,21 @@ function SellerPaymentsCard() {
 
   const handleStartOnboarding = useCallback(async () => {
     setError(null);
-    // Always destroy the old instance so we get a fresh ephemeral key
+    // Tear down any previous instance completely
     setStripeInstance(null);
     setShowOnboarding(false);
+    // Bump key to force React to unmount/remount the Connect components
+    setOnboardingKey((k) => k + 1);
+
     try {
+      // Create a fresh account session first
+      const sessionResult = await createSession.mutateAsync();
+      const clientSecret = sessionResult.clientSecret;
+
       const { loadConnectAndInitialize } = await import("@stripe/connect-js");
       const instance = loadConnectAndInitialize({
         publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-        fetchClientSecret: async () => {
-          const result = await createSession.mutateAsync();
-          return result.clientSecret;
-        },
+        fetchClientSecret: async () => clientSecret,
         appearance: {
           overlays: "dialog",
           variables: {
@@ -123,7 +128,7 @@ function SellerPaymentsCard() {
           </button>
         </div>
       ) : showOnboarding && stripeInstance ? (
-        <ConnectComponentsProvider connectInstance={stripeInstance}>
+        <ConnectComponentsProvider key={onboardingKey} connectInstance={stripeInstance}>
           <ConnectAccountOnboarding
             onExit={() => {
               setShowOnboarding(false);

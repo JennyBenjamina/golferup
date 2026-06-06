@@ -81,7 +81,10 @@ export const searchRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const conditions = [eq(listings.status, "active")];
+      const conditions = [
+        eq(listings.status, "active"),
+        eq(users.stripeOnboarded, true),
+      ];
       const hasQuery = input.query.trim().length > 0;
 
       // Full-text search condition

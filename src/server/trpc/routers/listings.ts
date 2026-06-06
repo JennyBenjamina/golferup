@@ -56,7 +56,10 @@ export const listingsRouter = router({
           orderBy = desc(listings.createdAt);
       }
 
-      const conditions = [eq(listings.status, "active")];
+      const conditions = [
+        eq(listings.status, "active"),
+        eq(users.stripeOnboarded, true),
+      ];
       if (category) {
         conditions.push(eq(listings.category, category as any));
       }
@@ -201,20 +204,23 @@ export const listingsRouter = router({
       return { success: true };
     }),
 
-  // Get listings by a specific user
+  // Get listings by a specific user (only show if seller has completed Stripe onboarding)
   byUser: publicProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       return ctx.db
-        .select()
+        .select({ listing: listings })
         .from(listings)
+        .innerJoin(users, eq(listings.sellerId, users.id))
         .where(
           and(
             eq(listings.sellerId, input.userId),
-            eq(listings.status, "active")
+            eq(listings.status, "active"),
+            eq(users.stripeOnboarded, true)
           )
         )
-        .orderBy(desc(listings.createdAt));
+        .orderBy(desc(listings.createdAt))
+        .then((rows) => rows.map((r) => r.listing));
     }),
 
   // Get current user's listings (all statuses except deleted)
