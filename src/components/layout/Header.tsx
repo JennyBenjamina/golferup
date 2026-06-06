@@ -23,6 +23,16 @@ function UnreadBadge() {
     </span>
   );
 }
+
+function useSellerSetupNeeded() {
+  const { data: session } = useSession();
+  const { data: status } = trpc.payments.sellerStatus.useQuery(undefined, {
+    enabled: !!session,
+    staleTime: 60000,
+  });
+  return status?.status !== "active";
+}
+
 import {
   Search,
   Plus,
@@ -37,6 +47,7 @@ import {
   Heart,
   MapPin,
   Tag,
+  CreditCard,
 } from "lucide-react";
 
 export function Header() {
@@ -46,6 +57,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const sellerSetupNeeded = useSellerSetupNeeded();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +143,7 @@ export function Header() {
                 <div className="relative ml-1">
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                    className="relative flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
                   >
                     {session.user?.image ? (
                       <img
@@ -144,9 +156,28 @@ export function Header() {
                         <User className="w-4 h-4 text-emerald-700" />
                       </div>
                     )}
+                    {sellerSetupNeeded && (
+                      <span className="absolute top-0.5 right-0.5 w-3 h-3 bg-amber-500 rounded-full border-2 border-white" />
+                    )}
                   </button>
                   {mobileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                      {sellerSetupNeeded && (
+                        <>
+                          <Link
+                            href="/settings"
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            <div>
+                              <span className="font-medium">Connect Stripe</span>
+                              <p className="text-xs text-amber-600 mt-0.5">Set up payments to sell</p>
+                            </div>
+                          </Link>
+                          <hr className="my-1" />
+                        </>
+                      )}
                       <Link
                         href={`/profile/${session.user?.id}`}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -243,6 +274,19 @@ export function Header() {
             </Link>
             {session ? (
               <>
+                {sellerSetupNeeded && (
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-amber-700 bg-amber-50 rounded-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <div>
+                      <span className="font-medium">Connect Stripe</span>
+                      <p className="text-xs text-amber-600 mt-0.5">Set up payments to sell</p>
+                    </div>
+                  </Link>
+                )}
                 <Link
                   href="/sell"
                   className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100"
