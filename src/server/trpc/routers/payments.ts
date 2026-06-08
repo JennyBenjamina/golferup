@@ -31,7 +31,24 @@ export const paymentsRouter = router({
 
     let stripeAccountId: string = user.stripeAccountId ?? "";
 
-    // Create Connect account if they don't have one
+    // Verify existing account still exists on Stripe, or create a new one
+    if (stripeAccountId) {
+      try {
+        await checkAccountStatus(stripeAccountId);
+      } catch (err: any) {
+        // Account was deleted from Stripe — clear and recreate
+        if (err?.statusCode === 404 || err?.code === "account_invalid" || err?.message?.includes("No such account")) {
+          stripeAccountId = "";
+          await ctx.db
+            .update(users)
+            .set({ stripeAccountId: null, stripeOnboarded: false })
+            .where(eq(users.id, ctx.userId));
+        } else {
+          throw err;
+        }
+      }
+    }
+
     if (!stripeAccountId) {
       const account = await createConnectAccount({
         email: user.email,
@@ -110,7 +127,20 @@ export const paymentsRouter = router({
       return { status: "not_started" as const };
     }
 
-    const accountStatus = await checkAccountStatus(user.stripeAccountId);
+    let accountStatus;
+    try {
+      accountStatus = await checkAccountStatus(user.stripeAccountId);
+    } catch (err: any) {
+      // Account was deleted from Stripe — clear stale data and reset
+      if (err?.statusCode === 404 || err?.code === "account_invalid" || err?.message?.includes("No such account")) {
+        await ctx.db
+          .update(users)
+          .set({ stripeAccountId: null, stripeOnboarded: false })
+          .where(eq(users.id, ctx.userId));
+        return { status: "not_started" as const };
+      }
+      throw err;
+    }
 
     // Update onboarded status if newly completed
     const isFullyOnboarded =
