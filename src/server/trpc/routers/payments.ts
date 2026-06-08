@@ -113,17 +113,21 @@ export const paymentsRouter = router({
     const accountStatus = await checkAccountStatus(user.stripeAccountId);
 
     // Update onboarded status if newly completed
-    if (accountStatus.chargesEnabled && !user.stripeOnboarded) {
+    const isFullyOnboarded =
+      accountStatus.chargesEnabled && accountStatus.detailsSubmitted;
+
+    if (isFullyOnboarded && !user.stripeOnboarded) {
       await ctx.db
         .update(users)
         .set({ stripeOnboarded: true })
         .where(eq(users.id, ctx.userId));
     }
 
+    // Only show "active" when our DB flag confirms onboarding is complete
+    const onboarded = isFullyOnboarded || user.stripeOnboarded;
+
     return {
-      status: accountStatus.chargesEnabled
-        ? ("active" as const)
-        : ("pending" as const),
+      status: onboarded ? ("active" as const) : ("pending" as const),
       chargesEnabled: accountStatus.chargesEnabled,
       payoutsEnabled: accountStatus.payoutsEnabled,
       detailsSubmitted: accountStatus.detailsSubmitted,
