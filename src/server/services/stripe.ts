@@ -36,6 +36,11 @@ export async function createConnectAccount(params: {
       card_payments: { requested: true },
       transfers: { requested: true },
     },
+    business_profile: {
+      url: "https://golferup.golf",
+      product_description:
+        "Selling used golf equipment on the GolferUp marketplace.",
+    },
   });
 
   return account;

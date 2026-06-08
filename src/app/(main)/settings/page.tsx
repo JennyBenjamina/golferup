@@ -15,19 +15,9 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { useState, useCallback, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
-import dynamic from "next/dynamic";
-
-const ConnectComponentsProvider = dynamic(
-  () => import("@stripe/react-connect-js").then((m) => m.ConnectComponentsProvider),
-  { ssr: false }
-);
-const ConnectAccountOnboarding = dynamic(
-  () => import("@stripe/react-connect-js").then((m) => m.ConnectAccountOnboarding),
-  { ssr: false }
-);
 
 const profileSchema = z.object({
   name: z.string().min(1).max(255),
@@ -40,51 +30,22 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 function SellerPaymentsCard() {
   const { data: status, isLoading } = trpc.payments.sellerStatus.useQuery();
-  const utils = trpc.useUtils();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [stripeInstance, setStripeInstance] = useState<any>(null);
-  const [onboardingKey, setOnboardingKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const createSession = trpc.payments.createAccountSession.useMutation();
+  const onboardSeller = trpc.payments.onboardSeller.useMutation({
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+    onError: (err) => {
+      setError(err.message || "Failed to start onboarding");
+    },
+  });
 
   const dashboard = trpc.payments.dashboardLink.useMutation({
     onSuccess: (data) => {
       window.open(data.url, "_blank");
     },
   });
-
-  const handleStartOnboarding = useCallback(async () => {
-    setError(null);
-    // Tear down any previous instance completely
-    setStripeInstance(null);
-    setShowOnboarding(false);
-    // Bump key to force React to unmount/remount the Connect components
-    setOnboardingKey((k) => k + 1);
-
-    try {
-      // Create a fresh account session first
-      const sessionResult = await createSession.mutateAsync();
-      const clientSecret = sessionResult.clientSecret;
-
-      const { loadConnectAndInitialize } = await import("@stripe/connect-js");
-      const instance = loadConnectAndInitialize({
-        publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-        fetchClientSecret: async () => clientSecret,
-        appearance: {
-          overlays: "dialog",
-          variables: {
-            colorPrimary: "#059669",
-            borderRadius: "8px",
-          },
-        },
-      });
-      setStripeInstance(instance);
-      setShowOnboarding(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to start onboarding");
-    }
-  }, [createSession]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
@@ -127,25 +88,25 @@ function SellerPaymentsCard() {
             View Stripe Dashboard
           </button>
         </div>
-      ) : showOnboarding && stripeInstance ? (
-        <ConnectComponentsProvider key={onboardingKey} connectInstance={stripeInstance}>
-          <ConnectAccountOnboarding
-            onExit={() => {
-              setShowOnboarding(false);
-              setStripeInstance(null);
-              utils.payments.sellerStatus.invalidate();
-            }}
-          />
-        </ConnectComponentsProvider>
       ) : (
-        <button
-          onClick={handleStartOnboarding}
-          disabled={createSession.isPending}
-          className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
-        >
-          {createSession.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-          {status?.status === "pending" ? "Continue Setup" : "Connect Stripe Account"}
-        </button>
+        <div className="space-y-3">
+          {status?.status === "pending" && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+              <p className="text-sm text-amber-800">
+                Your setup is almost done. Click below to finish connecting your account.
+              </p>
+            </div>
+          )}
+          <button
+            onClick={() => onboardSeller.mutate()}
+            disabled={onboardSeller.isPending}
+            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {onboardSeller.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {status?.status === "pending" ? "Continue Setup" : "Connect Stripe Account"}
+          </button>
+        </div>
       )}
 
       {error && (
