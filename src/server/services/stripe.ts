@@ -62,6 +62,9 @@ export async function createOnboardingLink(params: {
     return_url: params.returnUrl,
     refresh_url: params.refreshUrl,
     type: "account_onboarding",
+    collection_options: {
+      fields: "currently_due",
+    },
   });
 
   return accountLink;
