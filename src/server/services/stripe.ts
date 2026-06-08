@@ -36,10 +36,12 @@ export async function createConnectAccount(params: {
       card_payments: { requested: true },
       transfers: { requested: true },
     },
+    business_type: "individual",
     business_profile: {
       url: "https://golferup.golf",
+      mcc: "5941",
       product_description:
-        "Selling used golf equipment on the GolferUp marketplace.",
+        "Selling used golf equipment (clubs, balls, apparel, accessories) on the GolferUp marketplace.",
     },
   });
 
