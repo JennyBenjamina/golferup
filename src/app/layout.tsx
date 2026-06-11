@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "GolfOnly — Buy, Sell & Trade Golf Gear",
   description:
     "The marketplace and community for golf enthusiasts. Buy, sell, and trade clubs, bags, apparel, and more.",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState } from "react";
@@ -29,8 +30,12 @@ function useSellerSetupNeeded() {
   const { data: status } = trpc.payments.sellerStatus.useQuery(undefined, {
     enabled: !!session,
     staleTime: 60000,
+    retry: false,
   });
-  return status?.status !== "active";
+  // Only show notification if we got a definitive non-active status
+  // If the query hasn't loaded yet or errored, don't nag the user
+  if (!status) return false;
+  return status.status !== "active";
 }
 
 import {
@@ -80,13 +85,15 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              Golf<span className="text-emerald-600">Only</span>
-            </span>
+          <Link href="/" className="shrink-0">
+            <Image
+              src="/logo.svg"
+              alt="GolfOnly"
+              width={40}
+              height={40}
+              className="rounded-lg"
+              priority
+            />
           </Link>
 
           {/* Location + Search bar - desktop */}

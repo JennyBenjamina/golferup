@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -127,9 +128,13 @@ export function Footer() {
         </div>
         <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-emerald-600 rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-xs">G</span>
-            </div>
+            <Image
+              src="/logo.svg"
+              alt="GolfOnly"
+              width={28}
+              height={28}
+              className="rounded-md"
+            />
             <span className="text-sm font-semibold text-gray-900">
               Golf<span className="text-emerald-600">Only</span>
             </span>

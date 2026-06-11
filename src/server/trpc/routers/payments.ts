@@ -139,7 +139,15 @@ export const paymentsRouter = router({
           .where(eq(users.id, ctx.userId));
         return { status: "not_started" as const };
       }
-      throw err;
+      // For any other Stripe error (rate limit, network, etc.),
+      // fall back to the DB flag rather than crashing
+      console.error("Stripe checkAccountStatus error:", err?.message ?? err);
+      return {
+        status: user.stripeOnboarded ? ("active" as const) : ("pending" as const),
+        chargesEnabled: user.stripeOnboarded ?? false,
+        payoutsEnabled: false,
+        detailsSubmitted: user.stripeOnboarded ?? false,
+      };
     }
 
     // Update onboarded status if newly completed

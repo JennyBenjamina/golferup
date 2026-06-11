@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
@@ -9,13 +10,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">G</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">
-              Golf<span className="text-emerald-600">Only</span>
-            </span>
+          <Link href="/" className="inline-block">
+            <Image
+              src="/logo.svg"
+              alt="GolfOnly"
+              width={80}
+              height={80}
+              className="rounded-xl mx-auto"
+              priority
+            />
           </Link>
           <p className="text-sm text-gray-600 mt-2">
             Sign in to buy, sell, and connect with golfers.
