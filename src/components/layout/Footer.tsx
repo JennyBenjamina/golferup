@@ -10,11 +10,40 @@ export function Footer() {
               Marketplace
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link href="/category/drivers" className="hover:text-emerald-600">Drivers</Link></li>
-              <li><Link href="/category/irons" className="hover:text-emerald-600">Irons</Link></li>
-              <li><Link href="/category/putters" className="hover:text-emerald-600">Putters</Link></li>
-              <li><Link href="/category/bags" className="hover:text-emerald-600">Bags</Link></li>
-              <li><Link href="/category/apparel" className="hover:text-emerald-600">Apparel</Link></li>
+              <li>
+                <Link
+                  href="/category/drivers"
+                  className="hover:text-emerald-600"
+                >
+                  Drivers
+                </Link>
+              </li>
+              <li>
+                <Link href="/category/irons" className="hover:text-emerald-600">
+                  Irons
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/category/putters"
+                  className="hover:text-emerald-600"
+                >
+                  Putters
+                </Link>
+              </li>
+              <li>
+                <Link href="/category/bags" className="hover:text-emerald-600">
+                  Bags
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/category/apparel"
+                  className="hover:text-emerald-600"
+                >
+                  Apparel
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -22,10 +51,38 @@ export function Footer() {
               Community
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link href="/community?cat=gear_talk" className="hover:text-emerald-600">Gear Talk</Link></li>
-              <li><Link href="/community?cat=course_reviews" className="hover:text-emerald-600">Course Reviews</Link></li>
-              <li><Link href="/community?cat=swing_tips" className="hover:text-emerald-600">Swing Tips</Link></li>
-              <li><Link href="/community?cat=deals" className="hover:text-emerald-600">Deals</Link></li>
+              <li>
+                <Link
+                  href="/community?cat=gear_talk"
+                  className="hover:text-emerald-600"
+                >
+                  Gear Talk
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/community?cat=course_reviews"
+                  className="hover:text-emerald-600"
+                >
+                  Course Reviews
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/community?cat=swing_tips"
+                  className="hover:text-emerald-600"
+                >
+                  Swing Tips
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/community?cat=deals"
+                  className="hover:text-emerald-600"
+                >
+                  Deals
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -33,9 +90,21 @@ export function Footer() {
               Support
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link href="/help" className="hover:text-emerald-600">Help Center</Link></li>
-              <li><Link href="/safety" className="hover:text-emerald-600">Safety Tips</Link></li>
-              <li><Link href="/contact" className="hover:text-emerald-600">Contact Us</Link></li>
+              <li>
+                <Link href="/help" className="hover:text-emerald-600">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/safety" className="hover:text-emerald-600">
+                  Safety Tips
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-emerald-600">
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -43,9 +112,21 @@ export function Footer() {
               Company
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link href="/about" className="hover:text-emerald-600">About</Link></li>
-              <li><Link href="/terms" className="hover:text-emerald-600">Terms of Service</Link></li>
-              <li><Link href="/privacy" className="hover:text-emerald-600">Privacy Policy</Link></li>
+              <li>
+                <Link href="/about" className="hover:text-emerald-600">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-emerald-600">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-emerald-600">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -55,11 +136,11 @@ export function Footer() {
               <span className="text-white font-bold text-xs">G</span>
             </div>
             <span className="text-sm font-semibold text-gray-900">
-              Golfer<span className="text-emerald-600">Up</span>
+              Golf<span className="text-emerald-600">Only</span>
             </span>
           </div>
           <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} GolferUp. All rights reserved.
+            &copy; {new Date().getFullYear()} GolfOnly. All rights reserved.
           </p>
         </div>
       </div>

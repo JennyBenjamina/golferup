@@ -34,7 +34,7 @@ export default function ReviewPage({
           Review Submitted
         </h1>
         <p className="text-sm text-gray-600 mb-6">
-          Thanks for helping build trust in the GolferUp community!
+          Thanks for helping build trust in the GolfOnly community!
         </p>
         <button
           onClick={() => router.push("/orders")}
@@ -71,7 +71,7 @@ export default function ReviewPage({
                     "w-8 h-8 transition-colors",
                     (hoveredRating || rating) >= star
                       ? "text-yellow-400 fill-yellow-400"
-                      : "text-gray-300"
+                      : "text-gray-300",
                   )}
                 />
               </button>

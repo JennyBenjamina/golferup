@@ -30,7 +30,7 @@ export async function createConnectAccount(params: {
     type: "express",
     email: params.email,
     metadata: {
-      golferup_user_id: params.userId,
+      golfonly_user_id: params.userId,
     },
     capabilities: {
       card_payments: { requested: true },
@@ -38,10 +38,10 @@ export async function createConnectAccount(params: {
     },
     business_type: "individual",
     business_profile: {
-      url: "https://golferup.golf",
+      url: "https://golfonly.golf",
       mcc: "5941",
       product_description:
-        "Selling used golf equipment (clubs, balls, apparel, accessories) on the GolferUp marketplace.",
+        "Selling used golf equipment (clubs, balls, apparel, accessories) on the GolfOnly marketplace.",
     },
   });
 
@@ -108,7 +108,7 @@ export async function createPaymentIntent(params: {
   const stripe = await getStripe();
   const amountInCents = Math.round(params.amount * 100);
   const platformFeeInCents = Math.round(
-    amountInCents * (PLATFORM_FEE_PERCENT / 100)
+    amountInCents * (PLATFORM_FEE_PERCENT / 100),
   );
 
   const paymentIntent = await stripe.paymentIntents.create({
@@ -152,7 +152,7 @@ export async function cancelPayment(paymentIntentId: string) {
  */
 export async function refundPayment(
   paymentIntentId: string,
-  reason?: "duplicate" | "fraudulent" | "requested_by_customer"
+  reason?: "duplicate" | "fraudulent" | "requested_by_customer",
 ) {
   const stripe = await getStripe();
   return stripe.refunds.create({
@@ -168,13 +168,13 @@ export async function refundPayment(
  */
 export async function constructWebhookEvent(
   payload: string | Buffer,
-  signature: string
+  signature: string,
 ) {
   const stripe = await getStripe();
   return stripe.webhooks.constructEvent(
     payload,
     signature,
-    process.env.STRIPE_WEBHOOK_SECRET!
+    process.env.STRIPE_WEBHOOK_SECRET!,
   );
 }
 

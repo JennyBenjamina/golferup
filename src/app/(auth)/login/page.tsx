@@ -14,7 +14,7 @@ export default function LoginPage() {
               <span className="text-white font-bold text-lg">G</span>
             </div>
             <span className="text-2xl font-bold text-gray-900">
-              Golfer<span className="text-emerald-600">Up</span>
+              Golf<span className="text-emerald-600">Only</span>
             </span>
           </Link>
           <p className="text-sm text-gray-600 mt-2">

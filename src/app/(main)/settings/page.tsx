@@ -54,7 +54,8 @@ function SellerPaymentsCard() {
         <h2 className="text-lg font-semibold text-gray-900">Seller Payments</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Connect your bank account through Stripe to receive payments when you sell items. GolferUp takes a 10% platform fee on each sale.
+        Connect your bank account through Stripe to receive payments when you
+        sell items. GolfOnly takes a 10% platform fee on each sale.
       </p>
 
       {isLoading ? (
@@ -94,7 +95,8 @@ function SellerPaymentsCard() {
             <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
               <p className="text-sm text-amber-800">
-                Your setup is almost done. Click below to finish connecting your account.
+                Your setup is almost done. Click below to finish connecting your
+                account.
               </p>
             </div>
           )}
@@ -103,8 +105,12 @@ function SellerPaymentsCard() {
             disabled={onboardSeller.isPending}
             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
           >
-            {onboardSeller.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-            {status?.status === "pending" ? "Continue Setup" : "Connect Stripe Account"}
+            {onboardSeller.isPending && (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            )}
+            {status?.status === "pending"
+              ? "Continue Setup"
+              : "Connect Stripe Account"}
           </button>
         </div>
       )}
@@ -158,9 +164,11 @@ function SettingsPageInner() {
     // Auto-geocode city/state to lat/lng
     if (data.locationCity || data.locationState) {
       try {
-        const q = [data.locationCity, data.locationState].filter(Boolean).join(", ");
+        const q = [data.locationCity, data.locationState]
+          .filter(Boolean)
+          .join(", ");
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=us&limit=1`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=us&limit=1`,
         );
         const results = await res.json();
         if (results.length > 0) {
@@ -193,7 +201,8 @@ function SettingsPageInner() {
         <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6">
           <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
           <p className="text-sm font-medium text-amber-800">
-            Your Stripe onboarding session expired. Click &ldquo;Continue Setup&rdquo; below to try again.
+            Your Stripe onboarding session expired. Click &ldquo;Continue
+            Setup&rdquo; below to try again.
           </p>
         </div>
       )}
@@ -250,9 +259,7 @@ function SettingsPageInner() {
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             {errors.name && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.name.message}
-              </p>
+              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
             )}
           </div>
 
@@ -358,7 +365,13 @@ function SettingsPageInner() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 sm:px-6 py-8"><Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" /></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" />
+        </div>
+      }
+    >
       <SettingsPageInner />
     </Suspense>
   );

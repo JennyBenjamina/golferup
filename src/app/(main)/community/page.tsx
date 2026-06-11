@@ -31,14 +31,21 @@ const sortOptions = [
   { label: "Top", value: "top", icon: Award },
 ] as const;
 
-type CategoryValue = "" | "gear_talk" | "course_reviews" | "swing_tips" | "deals" | "general";
+type CategoryValue =
+  | ""
+  | "gear_talk"
+  | "course_reviews"
+  | "swing_tips"
+  | "deals"
+  | "general";
 type SortValue = "newest" | "trending" | "top";
 
 function CommunityPageContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const initialCat = (searchParams.get("cat") ?? "") as CategoryValue;
-  const [activeCategory, setActiveCategory] = useState<CategoryValue>(initialCat);
+  const [activeCategory, setActiveCategory] =
+    useState<CategoryValue>(initialCat);
   const [sort, setSort] = useState<SortValue>("newest");
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -50,7 +57,7 @@ function CommunityPageContent() {
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-      }
+      },
     );
 
   const utils = trpc.useUtils();
@@ -93,7 +100,7 @@ function CommunityPageContent() {
               "px-4 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors",
               activeCategory === cat.value
                 ? "bg-emerald-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200",
             )}
           >
             {cat.label}
@@ -111,7 +118,7 @@ function CommunityPageContent() {
               "flex items-center gap-1.5 px-3 py-1 text-sm rounded-lg transition-colors",
               sort === opt.value
                 ? "bg-gray-900 text-white"
-                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100",
             )}
           >
             <opt.icon className="w-3.5 h-3.5" />
@@ -152,9 +159,8 @@ function CommunityPageContent() {
             Start the conversation
           </h3>
           <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
-            Be the first to share something with the GolferUp community. Talk
-            about your latest round, review a course, or share a deal you
-            found.
+            Be the first to share something with the GolfOnly community. Talk
+            about your latest round, review a course, or share a deal you found.
           </p>
           {session && (
             <Link
@@ -189,21 +195,21 @@ function CommunityPageContent() {
                       "p-1 rounded-md transition-colors",
                       item.hasUpvoted
                         ? "text-emerald-600 bg-emerald-50"
-                        : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                        : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50",
                     )}
                     disabled={!session}
                   >
                     <ArrowBigUp
                       className={cn(
                         "w-5 h-5",
-                        item.hasUpvoted && "fill-emerald-600"
+                        item.hasUpvoted && "fill-emerald-600",
                       )}
                     />
                   </button>
                   <span
                     className={cn(
                       "text-xs font-semibold",
-                      item.hasUpvoted ? "text-emerald-600" : "text-gray-500"
+                      item.hasUpvoted ? "text-emerald-600" : "text-gray-500",
                     )}
                   >
                     {item.post.upvoteCount ?? 0}

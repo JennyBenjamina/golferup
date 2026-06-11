@@ -1,8 +1,8 @@
-# GolferUp — Game Plan & Technical Blueprint
+# GolfOnly — Game Plan & Technical Blueprint
 
 ## Vision
 
-GolferUp is a marketplace and community platform where golf enthusiasts buy, sell, and trade gear — and connect with fellow golfers. Think OfferUp, but built from the ground up for the golf world: clubs, bags, apparel, accessories, rangefinders, carts, and everything in between — wrapped in a community layer where people can geek out about the game.
+GolfOnly is a marketplace and community platform where golf enthusiasts buy, sell, and trade gear — and connect with fellow golfers. Think OfferUp, but built from the ground up for the golf world: clubs, bags, apparel, accessories, rangefinders, carts, and everything in between — wrapped in a community layer where people can geek out about the game.
 
 ---
 
@@ -10,43 +10,43 @@ GolferUp is a marketplace and community platform where golf enthusiasts buy, sel
 
 ### Frontend
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Framework | **Next.js 15 (App Router)** | Server components, API routes, middleware, ISR — everything in one framework. Deploys natively on Vercel. |
-| Language | **TypeScript** | Type safety across the entire stack. Non-negotiable for a project this size. |
-| Styling | **Tailwind CSS 4 + shadcn/ui** | Utility-first CSS with a polished, accessible component library. Fast to build, easy to customize. |
-| State Management | **TanStack Query (React Query)** | Server state caching, optimistic updates, infinite scroll — perfect for a marketplace feed. |
-| Forms | **React Hook Form + Zod** | Performant forms with schema-based validation that's shared with the backend. |
-| Real-time | **Socket.io Client** | Powers the chat/messaging system with presence indicators and typing status. |
-| Maps | **Mapbox GL JS** | Display local listings on a map (golf is inherently local — people want nearby deals). |
-| Image Handling | **react-dropzone + browser-image-compression** | Client-side image compression before upload to keep storage costs down. |
+| Layer            | Technology                                     | Why                                                                                                       |
+| ---------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Framework        | **Next.js 15 (App Router)**                    | Server components, API routes, middleware, ISR — everything in one framework. Deploys natively on Vercel. |
+| Language         | **TypeScript**                                 | Type safety across the entire stack. Non-negotiable for a project this size.                              |
+| Styling          | **Tailwind CSS 4 + shadcn/ui**                 | Utility-first CSS with a polished, accessible component library. Fast to build, easy to customize.        |
+| State Management | **TanStack Query (React Query)**               | Server state caching, optimistic updates, infinite scroll — perfect for a marketplace feed.               |
+| Forms            | **React Hook Form + Zod**                      | Performant forms with schema-based validation that's shared with the backend.                             |
+| Real-time        | **Socket.io Client**                           | Powers the chat/messaging system with presence indicators and typing status.                              |
+| Maps             | **Mapbox GL JS**                               | Display local listings on a map (golf is inherently local — people want nearby deals).                    |
+| Image Handling   | **react-dropzone + browser-image-compression** | Client-side image compression before upload to keep storage costs down.                                   |
 
 ### Backend
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| API Layer | **Next.js Route Handlers + tRPC** | tRPC gives you end-to-end type safety between client and server. No code generation, no schema drift. |
-| Database | **PostgreSQL (via Neon)** | Serverless Postgres that scales to zero — perfect for Vercel. Branching for dev/staging environments. |
-| ORM | **Drizzle ORM** | Lightweight, type-safe, SQL-like syntax. Faster and leaner than Prisma for serverless. |
-| Auth | **NextAuth.js v5 (Auth.js)** | Google, Apple, email magic links. Built for Next.js, handles sessions and JWT out of the box. |
-| Real-time Server | **Socket.io (on a separate Node server)** | Handles WebSocket connections for chat. Deployed as a standalone service (Railway or Fly.io). |
-| Payments | **Stripe Connect** | Marketplace payments with escrow. Stripe handles payouts to sellers, takes a platform fee. |
-| File Storage | **Uploadthing or Cloudflare R2** | Image uploads for listings and profiles. R2 has no egress fees; Uploadthing is simpler to integrate. |
-| Search | **Meilisearch (via Meilisearch Cloud)** | Typo-tolerant, fast, faceted search. Filter by brand, club type, condition, price range, location. |
-| Email | **Resend + React Email** | Transactional emails (order confirmations, messages, password resets) with React-based templates. |
-| Background Jobs | **Inngest** | Serverless-friendly job queue. Handles things like: send notification after purchase, expire stale listings, generate search indexes. |
-| Push Notifications | **Web Push API + FCM** | Browser push for new messages, offers, and price drops. |
+| Layer              | Technology                                | Why                                                                                                                                   |
+| ------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| API Layer          | **Next.js Route Handlers + tRPC**         | tRPC gives you end-to-end type safety between client and server. No code generation, no schema drift.                                 |
+| Database           | **PostgreSQL (via Neon)**                 | Serverless Postgres that scales to zero — perfect for Vercel. Branching for dev/staging environments.                                 |
+| ORM                | **Drizzle ORM**                           | Lightweight, type-safe, SQL-like syntax. Faster and leaner than Prisma for serverless.                                                |
+| Auth               | **NextAuth.js v5 (Auth.js)**              | Google, Apple, email magic links. Built for Next.js, handles sessions and JWT out of the box.                                         |
+| Real-time Server   | **Socket.io (on a separate Node server)** | Handles WebSocket connections for chat. Deployed as a standalone service (Railway or Fly.io).                                         |
+| Payments           | **Stripe Connect**                        | Marketplace payments with escrow. Stripe handles payouts to sellers, takes a platform fee.                                            |
+| File Storage       | **Uploadthing or Cloudflare R2**          | Image uploads for listings and profiles. R2 has no egress fees; Uploadthing is simpler to integrate.                                  |
+| Search             | **Meilisearch (via Meilisearch Cloud)**   | Typo-tolerant, fast, faceted search. Filter by brand, club type, condition, price range, location.                                    |
+| Email              | **Resend + React Email**                  | Transactional emails (order confirmations, messages, password resets) with React-based templates.                                     |
+| Background Jobs    | **Inngest**                               | Serverless-friendly job queue. Handles things like: send notification after purchase, expire stale listings, generate search indexes. |
+| Push Notifications | **Web Push API + FCM**                    | Browser push for new messages, offers, and price drops.                                                                               |
 
 ### Infrastructure & DevOps
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Hosting | **Vercel** | Zero-config Next.js deployment, edge functions, preview deployments on every PR. |
-| Real-time Hosting | **Railway or Fly.io** | Socket.io server needs a persistent process — can't run on Vercel's serverless functions. |
-| CI/CD | **GitHub Actions** | Automated testing, linting, type checking on every push. Vercel handles the deploy. |
-| Monitoring | **Sentry** | Error tracking, performance monitoring, session replay for debugging. |
-| Analytics | **PostHog** | Product analytics, feature flags, session recordings. Open-source friendly. |
-| CDN / Images | **Vercel Image Optimization** or **Cloudflare Images** | Automatic resizing, WebP/AVIF conversion, lazy loading. |
+| Layer             | Technology                                             | Why                                                                                       |
+| ----------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Hosting           | **Vercel**                                             | Zero-config Next.js deployment, edge functions, preview deployments on every PR.          |
+| Real-time Hosting | **Railway or Fly.io**                                  | Socket.io server needs a persistent process — can't run on Vercel's serverless functions. |
+| CI/CD             | **GitHub Actions**                                     | Automated testing, linting, type checking on every push. Vercel handles the deploy.       |
+| Monitoring        | **Sentry**                                             | Error tracking, performance monitoring, session replay for debugging.                     |
+| Analytics         | **PostHog**                                            | Product analytics, feature flags, session recordings. Open-source friendly.               |
+| CDN / Images      | **Vercel Image Optimization** or **Cloudflare Images** | Automatic resizing, WebP/AVIF conversion, lazy loading.                                   |
 
 ---
 
@@ -179,7 +179,7 @@ follows
 
 ### Phase 5 — Community (Weeks 11–13)
 
-**Goal:** Build the social layer that makes GolferUp sticky.
+**Goal:** Build the social layer that makes GolfOnly sticky.
 
 - Forum/feed: posts with categories (gear talk, course reviews, swing tips, deals)
 - Rich text editor: support for images, links, formatting (Tiptap)
@@ -268,19 +268,19 @@ Comparable search quality at a fraction of the cost. Self-hostable if you outgro
 
 ## Third-Party Accounts You'll Need
 
-| Service | Purpose | Pricing |
-|---------|---------|---------|
-| **Vercel** | App hosting | Free tier → Pro at $20/mo |
-| **Neon** | PostgreSQL database | Free tier (0.5 GB) → Scale |
-| **Stripe** | Payments | 2.9% + $0.30 per transaction |
-| **Meilisearch Cloud** | Search | Free tier (10K docs) → $30/mo |
-| **Uploadthing** or **Cloudflare R2** | Image storage | Free tier → pay per GB |
-| **Resend** | Transactional email | Free (100 emails/day) → $20/mo |
-| **Railway** or **Fly.io** | Socket.io server | Free tier → $5/mo |
-| **Sentry** | Error monitoring | Free tier (5K errors/mo) |
-| **PostHog** | Analytics | Free tier (1M events/mo) |
-| **Mapbox** | Maps & geocoding | Free tier (50K loads/mo) |
-| **GitHub** | Source control + CI/CD | Free |
+| Service                              | Purpose                | Pricing                        |
+| ------------------------------------ | ---------------------- | ------------------------------ |
+| **Vercel**                           | App hosting            | Free tier → Pro at $20/mo      |
+| **Neon**                             | PostgreSQL database    | Free tier (0.5 GB) → Scale     |
+| **Stripe**                           | Payments               | 2.9% + $0.30 per transaction   |
+| **Meilisearch Cloud**                | Search                 | Free tier (10K docs) → $30/mo  |
+| **Uploadthing** or **Cloudflare R2** | Image storage          | Free tier → pay per GB         |
+| **Resend**                           | Transactional email    | Free (100 emails/day) → $20/mo |
+| **Railway** or **Fly.io**            | Socket.io server       | Free tier → $5/mo              |
+| **Sentry**                           | Error monitoring       | Free tier (5K errors/mo)       |
+| **PostHog**                          | Analytics              | Free tier (1M events/mo)       |
+| **Mapbox**                           | Maps & geocoding       | Free tier (50K loads/mo)       |
+| **GitHub**                           | Source control + CI/CD | Free                           |
 
 **Estimated monthly cost at launch: $0–30/month** (most services have generous free tiers).
 

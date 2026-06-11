@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GolferUp — Buy, Sell & Trade Golf Gear",
+  title: "GolfOnly — Buy, Sell & Trade Golf Gear",
   description:
     "The marketplace and community for golf enthusiasts. Buy, sell, and trade clubs, bags, apparel, and more.",
 };

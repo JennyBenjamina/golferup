@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export interface UserLocation {
   lat: number;
@@ -21,7 +27,7 @@ const LocationContext = createContext<LocationContextType>({
   clearLocation: () => {},
 });
 
-const STORAGE_KEY = "golferup_location";
+const STORAGE_KEY = "golfonly_location";
 
 export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocationState] = useState<UserLocation | null>(null);

@@ -85,7 +85,7 @@ export function Header() {
               <span className="text-white font-bold text-sm">G</span>
             </div>
             <span className="text-xl font-bold text-gray-900">
-              Golfer<span className="text-emerald-600">Up</span>
+              Golf<span className="text-emerald-600">Only</span>
             </span>
           </Link>
 
