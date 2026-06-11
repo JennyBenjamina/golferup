@@ -174,6 +174,7 @@ export const listings = pgTable(
     loft: varchar("loft", { length: 50 }),
     shaft: varchar("shaft", { length: 100 }),
     hand: handEnum("hand"),
+    serialNumber: varchar("serial_number", { length: 100 }),
     size: varchar("size", { length: 50 }),
     gender: varchar("gender", { length: 20 }),
     color: varchar("color", { length: 50 }),

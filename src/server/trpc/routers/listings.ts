@@ -19,6 +19,7 @@ const createListingSchema = z.object({
   loft: z.string().max(50).optional(),
   shaft: z.string().max(100).optional(),
   hand: z.enum(["right", "left"]).optional(),
+  serialNumber: z.string().max(100).optional(),
   size: z.string().max(50).optional(),
   gender: z.string().max(20).optional(),
   color: z.string().max(50).optional(),

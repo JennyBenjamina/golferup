@@ -29,6 +29,7 @@ const listingSchema = z.object({
   loft: z.string().max(50).optional(),
   shaft: z.string().max(100).optional(),
   hand: z.enum(["right", "left"]).optional(),
+  serialNumber: z.string().max(100).optional(),
   // Apparel / shoes / gloves
   size: z.string().max(50).optional(),
   gender: z.string().max(20).optional(),
@@ -136,6 +137,7 @@ function SellPageInner() {
         loft: listing.loft ?? "",
         shaft: listing.shaft ?? "",
         hand: listing.hand ?? "right",
+        serialNumber: listing.serialNumber ?? "",
         size: listing.size ?? "",
         gender: listing.gender ?? "",
         color: listing.color ?? "",
@@ -397,6 +399,16 @@ function SellPageInner() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Serial Number
+              </label>
+              <input
+                {...register("serialNumber")}
+                placeholder="e.g., JK12345678"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
             </div>
           </>
         )}

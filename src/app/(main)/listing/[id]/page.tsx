@@ -397,6 +397,11 @@ export default function ListingDetailPage({
                 {listing.shaft}
               </span>
             )}
+            {listing.serialNumber && (
+              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                S/N: {listing.serialNumber}
+              </span>
+            )}
             {listing.size && (
               <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
                 Size {listing.size}
