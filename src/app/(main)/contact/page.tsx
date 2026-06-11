@@ -66,14 +66,11 @@ export default function ContactPage() {
       {/* FAQ hint */}
       <div className="mt-10 p-6 bg-gray-50 rounded-xl text-center">
         <p className="text-sm text-gray-600">
-          Before reaching out, you may find your answer in our{" "}
-          <a href="/terms" className="text-emerald-600 hover:underline font-medium">
-            Terms of Service
+          Before reaching out, check our{" "}
+          <a href="/faq" className="text-emerald-600 hover:underline font-medium">
+            Frequently Asked Questions
           </a>{" "}
-          or{" "}
-          <a href="/privacy" className="text-emerald-600 hover:underline font-medium">
-            Privacy Policy
-          </a>.
+          — your answer might already be there.
         </p>
       </div>
     </div>

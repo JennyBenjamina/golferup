@@ -91,13 +91,8 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/help" className="hover:text-emerald-600">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/safety" className="hover:text-emerald-600">
-                  Safety Tips
+                <Link href="/faq" className="hover:text-emerald-600">
+                  Frequently Asked Questions
                 </Link>
               </li>
               <li>
