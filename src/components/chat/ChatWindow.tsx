@@ -12,6 +12,7 @@ interface ChatWindowProps {
   otherUser: {
     id: string;
     name: string | null;
+    nickname: string | null;
     image: string | null;
   } | null;
   listing?: {
