@@ -193,6 +193,7 @@ export const searchRouter = router({
         createdAt: listings.createdAt,
         sellerId: listings.sellerId,
         sellerName: users.name,
+        sellerNickname: users.nickname,
         sellerImage: users.image,
         sellerRatingAvg: users.ratingAvg,
       };
@@ -232,6 +233,7 @@ export const searchRouter = router({
         createdAt: new Date(r.createdAt).getTime(),
         sellerId: r.sellerId,
         sellerName: r.sellerName,
+        sellerNickname: r.sellerNickname,
         sellerImage: r.sellerImage,
         sellerRatingAvg: r.sellerRatingAvg,
         ...(r.distanceMiles !== undefined

@@ -71,7 +71,7 @@ export function ConversationList({
           ) : (
             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
               <span className="text-emerald-700 font-semibold">
-                {otherUser?.name?.charAt(0) ?? "?"}
+                {(otherUser?.nickname ?? otherUser?.name)?.charAt(0) ?? "?"}
               </span>
             </div>
           )}
@@ -83,7 +83,7 @@ export function ConversationList({
                 "text-sm truncate",
                 unreadCount > 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"
               )}>
-                {otherUser?.name ?? "Unknown User"}
+                {otherUser?.nickname ?? otherUser?.name ?? "Unknown User"}
               </p>
               {lastMessage && (
                 <span className="text-xs text-gray-400 shrink-0">

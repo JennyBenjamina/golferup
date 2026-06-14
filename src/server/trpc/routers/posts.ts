@@ -66,6 +66,7 @@ export const postsRouter = router({
           author: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
             ratingAvg: users.ratingAvg,
           },
@@ -117,6 +118,7 @@ export const postsRouter = router({
           author: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
             ratingAvg: users.ratingAvg,
             ratingCount: users.ratingCount,
@@ -330,6 +332,7 @@ export const postsRouter = router({
           author: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
           },
         })

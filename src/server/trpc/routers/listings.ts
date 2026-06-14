@@ -71,6 +71,7 @@ export const listingsRouter = router({
           seller: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
             ratingAvg: users.ratingAvg,
           },
@@ -103,6 +104,7 @@ export const listingsRouter = router({
           seller: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
             ratingAvg: users.ratingAvg,
             ratingCount: users.ratingCount,

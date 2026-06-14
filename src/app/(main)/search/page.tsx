@@ -215,7 +215,7 @@ function SearchContent() {
                 createdAt: new Date(hit.createdAt),
               }}
               seller={{
-                name: hit.sellerName,
+                name: hit.sellerNickname ?? hit.sellerName,
                 image: hit.sellerImage,
               }}
               isSaved={savedIds.has(hit.id)}

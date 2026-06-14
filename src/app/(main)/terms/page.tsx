@@ -44,7 +44,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-gray-900 mt-8 mb-3">5. Fees and Payments</h2>
           <p className="text-gray-700 leading-relaxed">
-            GolfOnly charges a platform fee of 10% on each completed sale, which is deducted from the seller's proceeds.
+            GolfOnly charges a platform fee of 3% on each completed sale, which is deducted from the seller's proceeds.
             Payments are processed through our third-party payment provider, Stripe. By using the Service as a seller,
             you agree to Stripe's terms of service. Buyers pay the listed or agreed-upon price; there are no additional
             buyer fees at this time.

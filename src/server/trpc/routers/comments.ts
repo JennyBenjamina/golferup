@@ -15,6 +15,7 @@ export const commentsRouter = router({
           author: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
           },
         })

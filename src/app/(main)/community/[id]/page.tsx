@@ -128,7 +128,7 @@ export default function PostDetailPage({
               ) : (
                 <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                   <span className="text-emerald-700 font-semibold">
-                    {author.name?.charAt(0) ?? "?"}
+                    {(author.nickname ?? author.name)?.charAt(0) ?? "?"}
                   </span>
                 </div>
               )}
@@ -138,7 +138,7 @@ export default function PostDetailPage({
                 href={`/profile/${author.id}`}
                 className="text-sm font-medium text-gray-900 hover:text-emerald-600"
               >
-                {author.name ?? "Anonymous"}
+                {author.nickname ?? author.name ?? "Anonymous"}
               </Link>
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span>{timeAgo(post.createdAt)}</span>
@@ -371,7 +371,7 @@ function CommentNode({
             ) : (
               <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
                 <span className="text-emerald-700 text-[10px] font-semibold">
-                  {node.author.name?.charAt(0) ?? "?"}
+                  {(node.author.nickname ?? node.author.name)?.charAt(0) ?? "?"}
                 </span>
               </div>
             )}
@@ -380,7 +380,7 @@ function CommentNode({
             href={`/profile/${node.author.id}`}
             className="text-xs font-medium text-gray-700 hover:text-emerald-600"
           >
-            {node.author.name ?? "Anonymous"}
+            {node.author.nickname ?? node.author.name ?? "Anonymous"}
           </Link>
           <span className="text-xs text-gray-400">
             {timeAgo(node.comment.createdAt)}
@@ -422,7 +422,7 @@ function CommentNode({
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder={`Reply to ${node.author.name ?? "Anonymous"}...`}
+              placeholder={`Reply to ${node.author.nickname ?? node.author.name ?? "Anonymous"}...`}
               rows={2}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
               autoFocus

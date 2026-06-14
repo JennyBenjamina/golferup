@@ -39,7 +39,7 @@ const faqs = [
       },
       {
         q: "What fees does GolfOnly charge?",
-        a: "GolfOnly charges a 10% platform fee on each completed sale. This is automatically deducted from the sale price before the remainder is deposited into your account.",
+        a: "GolfOnly charges a 3% platform fee on each completed sale. This is automatically deducted from the sale price before the remainder is deposited into your account.",
       },
       {
         q: "Why aren't my listings showing up?",

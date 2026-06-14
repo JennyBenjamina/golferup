@@ -63,13 +63,13 @@ export default function ProfilePage({
         ) : (
           <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
             <span className="text-2xl font-bold text-emerald-700">
-              {user.name?.charAt(0) ?? "?"}
+              {(user.nickname ?? user.name)?.charAt(0) ?? "?"}
             </span>
           </div>
         )}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {user.name ?? "Anonymous"}
+            {user.nickname ?? user.name ?? "Anonymous"}
           </h1>
           <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">

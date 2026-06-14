@@ -12,6 +12,7 @@ export const usersRouter = router({
         .select({
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
           bio: users.bio,
           locationCity: users.locationCity,
@@ -43,6 +44,7 @@ export const usersRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(255).optional(),
+        nickname: z.string().max(50).optional(),
         bio: z.string().max(500).optional(),
         image: z.string().url().optional(),
         locationCity: z.string().max(255).optional(),

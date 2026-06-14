@@ -118,13 +118,13 @@ export function ChatWindow({
           ) : (
             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
               <span className="text-emerald-700 font-semibold text-sm">
-                {otherUser?.name?.charAt(0) ?? "?"}
+                {(otherUser?.nickname ?? otherUser?.name)?.charAt(0) ?? "?"}
               </span>
             </div>
           )}
           <div className="min-w-0">
             <p className="font-medium text-gray-900 text-sm truncate">
-              {otherUser?.name ?? "Unknown User"}
+              {otherUser?.nickname ?? otherUser?.name ?? "Unknown User"}
             </p>
             {listing && (
               <p className="text-xs text-gray-500 truncate">

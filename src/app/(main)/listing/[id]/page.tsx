@@ -66,7 +66,7 @@ function OwnerOffers({ listingId, askingPrice }: { listingId: string; askingPric
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">
-                  {item.buyer.name ?? "Anonymous"}{" "}
+                  {item.buyer.nickname ?? item.buyer.name ?? "Anonymous"}{" "}
                   <span className="font-normal text-gray-500">offered</span>{" "}
                   {formatPrice(item.offer.amount)}
                 </p>
@@ -549,13 +549,13 @@ export default function ListingDetailPage({
               ) : (
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                   <span className="text-emerald-700 font-semibold">
-                    {seller.name?.charAt(0) ?? "?"}
+                    {(seller.nickname ?? seller.name)?.charAt(0) ?? "?"}
                   </span>
                 </div>
               )}
               <div>
                 <p className="font-medium text-gray-900 group-hover:text-emerald-600">
-                  {seller.name ?? "Anonymous"}
+                  {seller.nickname ?? seller.name ?? "Anonymous"}
                 </p>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />

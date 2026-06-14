@@ -239,6 +239,7 @@ export const offersRouter = router({
           buyer: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
             ratingAvg: users.ratingAvg,
           },
@@ -288,6 +289,7 @@ export const offersRouter = router({
         buyer: {
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
           ratingAvg: users.ratingAvg,
         },

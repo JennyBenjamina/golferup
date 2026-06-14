@@ -233,7 +233,7 @@ function CommunityPageContent() {
                       ) : (
                         <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
                           <span className="text-emerald-700 text-xs font-semibold">
-                            {item.author.name?.charAt(0) ?? "?"}
+                            {(item.author.nickname ?? item.author.name)?.charAt(0) ?? "?"}
                           </span>
                         </div>
                       )}
@@ -242,7 +242,7 @@ function CommunityPageContent() {
                       href={`/profile/${item.author.id}`}
                       className="text-xs font-medium text-gray-700 hover:text-emerald-600"
                     >
-                      {item.author.name ?? "Anonymous"}
+                      {item.author.nickname ?? item.author.name ?? "Anonymous"}
                     </Link>
                     <span className="text-xs text-gray-400">
                       {timeAgo(item.post.createdAt)}

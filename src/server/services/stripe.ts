@@ -16,7 +16,7 @@ async function getStripe() {
   return _stripe;
 }
 
-const PLATFORM_FEE_PERCENT = 10; // 10% platform fee
+const PLATFORM_FEE_PERCENT = 3; // 3% platform fee
 
 /**
  * Create a Stripe Connect Express account for a seller

@@ -124,6 +124,7 @@ export const messagesRouter = router({
           .select({
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
           })
           .from(users)

@@ -76,6 +76,7 @@ export const savedListingsRouter = router({
         },
         seller: {
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
         },
         savedAt: savedListings.createdAt,

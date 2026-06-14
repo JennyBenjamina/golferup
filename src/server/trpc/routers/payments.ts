@@ -428,6 +428,7 @@ export const paymentsRouter = router({
         seller: {
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
         },
       })
@@ -452,6 +453,7 @@ export const paymentsRouter = router({
         buyer: {
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
         },
       })

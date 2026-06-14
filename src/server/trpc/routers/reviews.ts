@@ -99,6 +99,7 @@ export const reviewsRouter = router({
           reviewer: {
             id: users.id,
             name: users.name,
+            nickname: users.nickname,
             image: users.image,
           },
         })

@@ -21,6 +21,7 @@ import { LocationSearchModal } from "@/components/listings/LocationSearchModal";
 
 const profileSchema = z.object({
   name: z.string().min(1).max(255),
+  nickname: z.string().max(50).optional(),
   bio: z.string().max(500).optional(),
   locationCity: z.string().max(255).optional(),
   locationState: z.string().max(100).optional(),
@@ -55,7 +56,7 @@ function SellerPaymentsCard() {
       </div>
       <p className="text-sm text-gray-500 mb-4">
         Connect your bank account through Stripe to receive payments when you
-        sell items. GolfOnly takes a 10% platform fee on each sale.
+        sell items. GolfOnly takes a 3% platform fee on each sale.
       </p>
 
       {isLoading ? (
@@ -142,6 +143,7 @@ function SettingsPageInner() {
     values: me
       ? {
           name: me.name ?? "",
+          nickname: me.nickname ?? "",
           bio: me.bio ?? "",
           locationCity: me.locationCity ?? "",
           locationState: me.locationState ?? "",
@@ -261,6 +263,20 @@ function SettingsPageInner() {
             {errors.name && (
               <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nickname
+            </label>
+            <input
+              {...register("nickname")}
+              placeholder="How other users will see you"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              This is the name shown on your listings, messages, and profile.
+            </p>
           </div>
 
           <div>

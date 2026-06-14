@@ -265,7 +265,7 @@ export default function OffersPage() {
                         <div className="w-5 h-5 bg-gray-200 rounded-full" />
                       )}
                       <span className="text-sm text-gray-600">
-                        {item.buyer.name ?? "Anonymous"}
+                        {item.buyer.nickname ?? item.buyer.name ?? "Anonymous"}
                       </span>
                       <ArrowRight className="w-3 h-3 text-gray-400" />
                       <span className="text-sm font-semibold text-gray-900">

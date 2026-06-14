@@ -75,6 +75,7 @@ export const followsRouter = router({
         .select({
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
           ratingAvg: users.ratingAvg,
         })
@@ -93,6 +94,7 @@ export const followsRouter = router({
         .select({
           id: users.id,
           name: users.name,
+          nickname: users.nickname,
           image: users.image,
           ratingAvg: users.ratingAvg,
         })
