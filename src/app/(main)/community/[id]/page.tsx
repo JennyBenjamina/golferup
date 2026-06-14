@@ -334,7 +334,7 @@ function CommentNode({
       upvoteCount: number | null;
       createdAt: Date;
     };
-    author: { id: string; name: string | null; image: string | null };
+    author: { id: string; name: string | null; nickname: string | null; image: string | null };
     replies: any[];
   };
   depth: number;
