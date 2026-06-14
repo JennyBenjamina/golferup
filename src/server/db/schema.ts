@@ -71,6 +71,7 @@ export const transactionStatusEnum = pgEnum("transaction_status", [
   "completed",
   "refunded",
   "disputed",
+  "cancelled",
 ]);
 
 export const postCategoryEnum = pgEnum("post_category", [

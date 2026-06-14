@@ -405,10 +405,10 @@ export const paymentsRouter = router({
         .set({ status: "active" })
         .where(eq(listings.id, transaction.listingId));
 
-      // Remove the transaction
+      // Cancel the transaction
       await ctx.db
         .update(transactions)
-        .set({ status: "refunded" })
+        .set({ status: "cancelled" })
         .where(eq(transactions.id, input.transactionId));
 
       return { success: true };

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { expireOverdueOffers } from "@/server/trpc/routers/offers";
+import { expireOverdueOffers, expireAbandonedCheckouts } from "@/server/trpc/routers/offers";
 
 /**
- * Cron endpoint: expire accepted offers whose payment deadline has passed.
- * Call via Vercel Cron or an external scheduler every 5–15 minutes.
+ * Cron endpoint: expire accepted offers whose payment deadline has passed
+ * AND clean up abandoned Buy Now checkouts (pending > 24 hours).
  *
- * Secured by CRON_SECRET env var.
+ * Runs daily via Vercel Cron. Secured by CRON_SECRET env var.
  */
 export async function GET(req: NextRequest) {
   // Verify cron secret
@@ -18,8 +18,13 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const expiredCount = await expireOverdueOffers(db);
-    return NextResponse.json({ ok: true, expiredCount });
+    const expiredOffers = await expireOverdueOffers(db);
+    const abandonedCheckouts = await expireAbandonedCheckouts(db);
+    return NextResponse.json({
+      ok: true,
+      expiredOffers,
+      abandonedCheckouts,
+    });
   } catch (error) {
     console.error("Cron expire-offers error:", error);
     return NextResponse.json(

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, and, desc, lt, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
-import { offers, listings, users } from "@/server/db/schema";
+import { offers, listings, users, transactions } from "@/server/db/schema";
 
 /**
  * Expire any accepted offers whose payment deadline has passed.
@@ -37,6 +37,41 @@ export async function expireOverdueOffers(db: any) {
   }
 
   return expired.length;
+}
+
+/**
+ * Expire abandoned "Buy Now" checkouts.
+ * If a pending transaction is older than 24 hours, the buyer never completed
+ * payment — cancel the transaction and relist the item.
+ */
+export async function expireAbandonedCheckouts(db: any) {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+
+  const abandoned = await db
+    .select({ id: transactions.id, listingId: transactions.listingId })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.status, "pending"),
+        lt(transactions.createdAt, cutoff)
+      )
+    );
+
+  for (const row of abandoned) {
+    // Mark transaction as cancelled (buyer never completed payment)
+    await db
+      .update(transactions)
+      .set({ status: "cancelled" })
+      .where(eq(transactions.id, row.id));
+
+    // Relist the item
+    await db
+      .update(listings)
+      .set({ status: "active" })
+      .where(eq(listings.id, row.listingId));
+  }
+
+  return abandoned.length;
 }
 
 export const offersRouter = router({
