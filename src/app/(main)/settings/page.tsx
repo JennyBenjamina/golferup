@@ -254,19 +254,6 @@ function SettingsPageInner() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Display Name
-            </label>
-            <input
-              {...register("name")}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            />
-            {errors.name && (
-              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
               Nickname
             </label>
             <input
@@ -277,6 +264,19 @@ function SettingsPageInner() {
             <p className="text-xs text-gray-400 mt-1">
               This is the name shown on your listings, messages, and profile.
             </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <input
+              {...register("name")}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+            )}
           </div>
 
           <div>
