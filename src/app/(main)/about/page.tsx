@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import Image from "next/image";
 
 export default function AboutPage() {
   return (
@@ -18,10 +18,14 @@ export default function AboutPage() {
         {/* Jamie Puterbaugh */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row gap-6">
-            {/* Image placeholder */}
-            <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 mx-auto sm:mx-0">
-              {/* TODO: Replace with <Image src="..." /> */}
-              <User className="w-12 h-12 text-gray-300" />
+            <div className="w-32 h-32 rounded-xl overflow-hidden shrink-0 mx-auto sm:mx-0 relative">
+              <Image
+                src="/JP.png"
+                alt="Jamie Puterbaugh"
+                fill
+                className="object-cover object-top"
+                sizes="128px"
+              />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Jamie Puterbaugh</h3>
@@ -40,10 +44,14 @@ export default function AboutPage() {
         {/* Jenny Lee */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row gap-6">
-            {/* Image placeholder */}
-            <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 mx-auto sm:mx-0">
-              {/* TODO: Replace with <Image src="..." /> */}
-              <User className="w-12 h-12 text-gray-300" />
+            <div className="w-32 h-32 rounded-xl overflow-hidden shrink-0 mx-auto sm:mx-0 relative">
+              <Image
+                src="/JL.jpg"
+                alt="Jenny Lee"
+                fill
+                className="object-cover object-top"
+                sizes="128px"
+              />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Jenny Lee</h3>
