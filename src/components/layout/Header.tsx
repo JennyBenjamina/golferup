@@ -87,7 +87,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="shrink-0">
             <Image
-              src="/logo.svg"
+              src="/golfonly.svg"
               alt="GolfOnly"
               width={40}
               height={40}

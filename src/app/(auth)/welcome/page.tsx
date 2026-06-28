@@ -63,7 +63,7 @@ export default function WelcomePage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Image
-            src="/logo.svg"
+            src="/golfonly.svg"
             alt="GolfOnly"
             width={80}
             height={80}

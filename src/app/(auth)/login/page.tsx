@@ -12,7 +12,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <Image
-              src="/logo.svg"
+              src="/golfonly.svg"
               alt="GolfOnly"
               width={80}
               height={80}

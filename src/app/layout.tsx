@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description:
     "The marketplace and community for golf enthusiasts. Buy, sell, and trade clubs, bags, apparel, and more.",
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 

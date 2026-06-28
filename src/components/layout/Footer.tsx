@@ -129,7 +129,7 @@ export function Footer() {
         <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image
-              src="/logo.svg"
+              src="/golfonly.svg"
               alt="GolfOnly"
               width={28}
               height={28}
