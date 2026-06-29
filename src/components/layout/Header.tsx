@@ -89,8 +89,8 @@ export function Header() {
             <Image
               src="/golfonly.svg"
               alt="GolfOnly"
-              width={40}
-              height={40}
+              width={56}
+              height={56}
               className="rounded-lg"
               priority
             />

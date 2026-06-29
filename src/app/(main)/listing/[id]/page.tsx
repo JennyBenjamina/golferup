@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { formatPrice, formatCondition, formatCategory, timeAgo } from "@/lib/utils";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { OfferModal } from "@/components/listings/OfferModal";
 import { PaymentCountdown } from "@/components/listings/PaymentCountdown";
@@ -218,6 +218,31 @@ export default function ListingDetailPage({
     },
   });
 
+  const [shareCopied, setShareCopied] = useState(false);
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    const title = data?.listing?.title ?? "Check out this listing on GolfOnly";
+
+    // Use native share sheet on mobile if available
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard API not available
+    }
+  }, [data?.listing?.title]);
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8 animate-pulse">
@@ -358,8 +383,16 @@ export default function ListingDetailPage({
                   )}
                 />
               </button>
-              <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
-                <Share2 className="w-5 h-5 text-gray-600" />
+              <button
+                onClick={handleShare}
+                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 relative"
+                title="Share listing"
+              >
+                {shareCopied ? (
+                  <Check className="w-5 h-5 text-emerald-600" />
+                ) : (
+                  <Share2 className="w-5 h-5 text-gray-600" />
+                )}
               </button>
             </div>
           </div>

@@ -131,8 +131,8 @@ export function Footer() {
             <Image
               src="/golfonly.svg"
               alt="GolfOnly"
-              width={28}
-              height={28}
+              width={40}
+              height={40}
               className="rounded-md"
             />
             <span className="text-sm font-semibold text-gray-900">
